@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Member, View, Tournament, Role, CurrentUser } from './types';
 import { Header } from './components/Header';
@@ -28,7 +29,7 @@ const getRelevantMonths = (): string[] => {
 
 
 const App: React.FC = () => {
-  const [view, setView] = useState<View>(View.MEMBERS);
+  const [view, setView] = useState<View>(View.DUES);
   const [members, setMembers] = useState<Member[]>([]);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [tournaments, setTournaments] = useState<Record<string, Tournament>>({});
@@ -86,15 +87,20 @@ const App: React.FC = () => {
   
   const filteredMembers = useMemo(() => {
     if (!currentUser) return [];
+
+    // Defensively filter out any members that are null, or missing critical 'id' or 'name' properties.
+    // This prevents crashes in rendering components if the data from Firestore is malformed.
+    const cleanMembers = members.filter((m): m is Member => !!(m && m.id && m.name));
+
     if (currentUser.name === SUPER_ADMIN_NAME) {
-        return members;
+        return cleanMembers;
     }
     if (currentUser.club) {
-        return members.filter(member => member.club === currentUser.club);
+        return cleanMembers.filter(member => member.club === currentUser.club);
     }
     // Fallback for an authenticated user who somehow has no club assigned (e.g., old data).
     // They will only see themselves.
-    return members.filter(member => member.id === currentUser.id);
+    return cleanMembers.filter(member => member.id === currentUser.id);
   }, [members, currentUser]);
 
   const handleLogout = async () => {

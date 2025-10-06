@@ -16,7 +16,7 @@ import { collection, doc, getDoc, onSnapshot, query, orderBy, setDoc, deleteDoc,
 
 
 const App = () => {
-  const [view, setView] = useState(View.MEMBERS);
+  const [view, setView] = useState(View.DUES);
   const [members, setMembers] = useState([]);
   const [editingMember, setEditingMember] = useState(null);
   const [tournaments, setTournaments] = useState({});
@@ -74,13 +74,18 @@ const App = () => {
   
   const filteredMembers = useMemo(() => {
     if (!currentUser) return [];
+
+    // Defensively filter out any members that are null, or missing critical 'id' or 'name' properties.
+    // This prevents crashes in rendering components if the data from Firestore is malformed.
+    const cleanMembers = members.filter(m => m && m.id && m.name);
+
     if (currentUser.name === SUPER_ADMIN_NAME) {
-        return members;
+        return cleanMembers;
     }
     if (currentUser.club) {
-        return members.filter(member => member.club === currentUser.club);
+        return cleanMembers.filter(member => member.club === currentUser.club);
     }
-    return members.filter(member => member.id === currentUser.id);
+    return cleanMembers.filter(member => member.id === currentUser.id);
   }, [members, currentUser]);
 
   const handleLogout = async () => {
