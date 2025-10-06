@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { Role } from '../types.js';
 import { SKILL_LEVELS, SUPER_ADMIN_NAME, CLUBS } from '../constants.js';
@@ -263,8 +264,8 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
                                     ))
                                 )
                             )
-                        )})
-                    )
+                        );
+                    }))
                 ) : ( // Grouped List View
                     React.createElement('div', { className: "bg-white rounded-lg shadow-lg overflow-hidden" },
                         React.createElement('div', { className: "overflow-x-auto" },
@@ -294,8 +295,8 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
                                                 React.createElement(MemberRow, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
                                             ))
                                         )
-                                    )})
-                                )
+                                    );
+                                }))
                             )
                         )
                     )
