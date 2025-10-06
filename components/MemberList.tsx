@@ -11,7 +11,7 @@ interface MemberListProps {
   currentUser: CurrentUser;
 }
 
-type DisplayMode = 'alphabetical' | 'byClub' | 'byLevel';
+type DisplayMode = 'byClub' | 'byLevel';
 
 const UserIcon: React.FC<{className?: string}> = ({ className }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -41,7 +41,8 @@ const getCurrentMonth = (): string => {
 const MemberCard: React.FC<{member: Member, onEdit: (m: Member) => void, onDelete: (id: string) => void, currentUser: CurrentUser}> = ({ member, onEdit, onDelete, currentUser }) => {
     const currentMonth = getCurrentMonth();
     const duesPaidThisMonth = member.dues?.[currentMonth] ?? false;
-    const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
+    const skillLevelObj = SKILL_LEVELS.find(l => l.value === member.skillLevel);
+    const skillLabel = skillLevelObj?.label || member.skillLevel;
     return (
         <div key={member.id} className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col">
             <div className="h-40 bg-gray-200 flex items-center justify-center">
@@ -82,7 +83,8 @@ const MemberCard: React.FC<{member: Member, onEdit: (m: Member) => void, onDelet
 const MemberRow: React.FC<{member: Member, onEdit: (m: Member) => void, onDelete: (id: string) => void, currentUser: CurrentUser}> = ({ member, onEdit, onDelete, currentUser }) => {
     const currentMonth = getCurrentMonth();
     const duesPaidThisMonth = member.dues?.[currentMonth] ?? false;
-    const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
+    const skillLevelObj = SKILL_LEVELS.find(l => l.value === member.skillLevel);
+    const skillLabel = skillLevelObj?.label || member.skillLevel;
     return (
         <tr key={member.id} className="hover:bg-gray-50">
             <td className="px-6 py-4 whitespace-nowrap">
@@ -131,7 +133,7 @@ const MemberRow: React.FC<{member: Member, onEdit: (m: Member) => void, onDelete
 
 export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelete, currentUser }) => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-    const [displayMode, setDisplayMode] = useState<DisplayMode>('alphabetical');
+    const [displayMode, setDisplayMode] = useState<DisplayMode>('byClub');
     
     if (members.length === 0) {
         return (
@@ -145,7 +147,7 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
     const processedMembers = useMemo(() => {
         const sorted = [...members].sort((a, b) => a.name.localeCompare(b.name));
         
-        if (currentUser.name !== SUPER_ADMIN_NAME || displayMode === 'alphabetical') {
+        if (currentUser.name !== SUPER_ADMIN_NAME) {
             return { type: 'flat' as const, data: sorted };
         }
 
@@ -175,7 +177,6 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
     }, [members, displayMode, currentUser.name]);
 
     const displayOptions: {key: DisplayMode, label: string}[] = [
-        { key: 'alphabetical', label: '이름순' },
         { key: 'byClub', label: '클럽별' },
         { key: 'byLevel', label: '등급별' },
     ];

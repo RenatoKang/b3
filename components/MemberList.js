@@ -32,7 +32,8 @@ const getCurrentMonth = () => {
 const MemberCard = ({ member, onEdit, onDelete, currentUser }) => {
     const currentMonth = getCurrentMonth();
     const duesPaidThisMonth = (member.dues && member.dues[currentMonth]) || false;
-    const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
+    const skillLevelObj = SKILL_LEVELS.find(l => l.value === member.skillLevel);
+    const skillLabel = (skillLevelObj && skillLevelObj.label) || member.skillLevel;
     return (
         React.createElement('div', { key: member.id, className: "bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col" },
             React.createElement('div', { className: "h-40 bg-gray-200 flex items-center justify-center" },
@@ -73,7 +74,8 @@ const MemberCard = ({ member, onEdit, onDelete, currentUser }) => {
 const MemberRow = ({ member, onEdit, onDelete, currentUser }) => {
     const currentMonth = getCurrentMonth();
     const duesPaidThisMonth = (member.dues && member.dues[currentMonth]) || false;
-    const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
+    const skillLevelObj = SKILL_LEVELS.find(l => l.value === member.skillLevel);
+    const skillLabel = (skillLevelObj && skillLevelObj.label) || member.skillLevel;
     return (
         React.createElement('tr', { key: member.id, className: "hover:bg-gray-50" },
             React.createElement('td', { className: "px-6 py-4 whitespace-nowrap" },
@@ -122,7 +124,7 @@ const MemberRow = ({ member, onEdit, onDelete, currentUser }) => {
 
 export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
     const [viewMode, setViewMode] = useState('list');
-    const [displayMode, setDisplayMode] = useState('alphabetical');
+    const [displayMode, setDisplayMode] = useState('byClub');
     
     if (members.length === 0) {
         return (
@@ -136,7 +138,7 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
     const processedMembers = useMemo(() => {
         const sorted = [...members].sort((a, b) => a.name.localeCompare(b.name));
         
-        if (currentUser.name !== SUPER_ADMIN_NAME || displayMode === 'alphabetical') {
+        if (currentUser.name !== SUPER_ADMIN_NAME) {
             return { type: 'flat', data: sorted };
         }
 
@@ -166,7 +168,6 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
     }, [members, displayMode, currentUser.name]);
 
     const displayOptions = [
-        { key: 'alphabetical', label: '이름순' },
         { key: 'byClub', label: '클럽별' },
         { key: 'byLevel', label: '등급별' },
     ];
