@@ -250,18 +250,20 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
             ) : ( // Grouped view
                 viewMode === 'grid' ? (
                     React.createElement('div', { className: "space-y-8" },
-                        Object.entries(processedMembers.data).map(([groupName, groupMembers]) => (
+                        Object.entries(processedMembers.data).map(([groupName, groupMembers]) => {
+                            const membersInGroup = groupMembers;
+                            return (
                             React.createElement('div', { key: groupName },
                                 React.createElement('h3', { className: "text-xl font-bold text-gray-800 border-b-2 border-brand-blue pb-2 mb-4" },
-                                    `${groupName} `, React.createElement('span', { className: "font-normal text-base text-gray-600" }, `(${groupMembers.length}명)`)
+                                    groupName, " ", React.createElement('span', { className: "font-normal text-base text-gray-600" }, "(", membersInGroup.length, "명)")
                                 ),
                                 React.createElement('div', { className: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" },
-                                    groupMembers.map(member => (
+                                    membersInGroup.map(member => (
                                         React.createElement(MemberCard, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
                                     ))
                                 )
                             )
-                        ))
+                        )})
                     )
                 ) : ( // Grouped List View
                     React.createElement('div', { className: "bg-white rounded-lg shadow-lg overflow-hidden" },
@@ -279,18 +281,20 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
                                     )
                                 ),
                                 React.createElement('tbody', { className: "bg-white divide-y divide-gray-200" },
-                                    Object.entries(processedMembers.data).map(([groupName, groupMembers]) => (
+                                    Object.entries(processedMembers.data).map(([groupName, groupMembers]) => {
+                                        const membersInGroup = groupMembers;
+                                        return (
                                         React.createElement(React.Fragment, { key: groupName },
                                             React.createElement('tr', null,
                                                 React.createElement('th', { colSpan: 7, className: "px-4 py-2 bg-brand-light text-left text-base font-bold text-brand-blue" },
-                                                    `${groupName} (${groupMembers.length}명)`
+                                                    groupName, " (", membersInGroup.length, "명)"
                                                 )
                                             ),
-                                            groupMembers.map(member => (
+                                            membersInGroup.map(member => (
                                                 React.createElement(MemberRow, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
                                             ))
                                         )
-                                    ))
+                                    )}))
                                 )
                             )
                         )

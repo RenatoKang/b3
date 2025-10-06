@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { Member, SkillLevel, Tournament, Match, GameType, Gender, CurrentUser, Role } from '../types';
-import { SKILL_LEVELS } from '../constants';
+
+import React, { useState, useMemo, useEffect } from 'react';
+import { Member, SkillLevel, Tournament, Match, GameType, Gender, CurrentUser, Role, Club } from '../types';
+import { SKILL_LEVELS, CLUBS, SUPER_ADMIN_NAME } from '../constants';
 import { generateBracket } from '../services/geminiService';
 import { BracketDisplay } from './BracketDisplay';
 
@@ -13,12 +14,13 @@ interface TournamentGeneratorProps {
     currentUser: CurrentUser;
 }
 
-type Mode = 'level' | 'combined' | 'gender' | 'mixed';
+type Mode = 'level' | 'combined' | 'gender' | 'mixed' | 'byClub';
 
 export const TournamentGenerator: React.FC<TournamentGeneratorProps> = ({ members, tournaments, onAdd, onUpdate, onDelete, currentUser }) => {
     const [mode, setMode] = useState<Mode>('level');
     const [selectedLevel, setSelectedLevel] = useState<SkillLevel>(SkillLevel.MA);
     const [selectedGender, setSelectedGender] = useState<Gender>(Gender.MALE);
+    const [selectedClub, setSelectedClub] = useState<Club>(CLUBS[0].value);
     const [mixedLevels, setMixedLevels] = useState<Record<SkillLevel, boolean>>(
         () => SKILL_LEVELS.reduce((acc, level) => ({...acc, [level.value]: false}), {} as Record<SkillLevel, boolean>)
     );
@@ -27,7 +29,27 @@ export const TournamentGenerator: React.FC<TournamentGeneratorProps> = ({ member
     const [error, setError] = useState<string | null>(null);
     const [activeTournamentId, setActiveTournamentId] = useState<string | null>(null);
 
-    const tournamentList = useMemo(() => Object.values(tournaments), [tournaments]);
+    const tournamentList = useMemo(() => {
+        // Sort by ID descending (newest first) since the ID contains a timestamp.
+        // FIX: Add explicit types for sort callback parameters to fix type inference issue.
+        return Object.values(tournaments).sort((a: Tournament, b: Tournament) => b.id.localeCompare(a.id));
+    }, [tournaments]);
+    
+    useEffect(() => {
+        const isTournamentListEmpty = tournamentList.length === 0;
+        const isCurrentTournamentValid = activeTournamentId && tournaments[activeTournamentId];
+
+        if (!isCurrentTournamentValid) {
+            if (!isTournamentListEmpty) {
+                // If current selection is invalid (e.g., deleted) and list is not empty, select the newest one.
+                setActiveTournamentId(tournamentList[0].id);
+            } else if (activeTournamentId !== null) {
+                // If list is empty, ensure activeTournamentId is null.
+                setActiveTournamentId(null);
+            }
+        }
+    }, [tournamentList, tournaments, activeTournamentId]);
+
     const activeTournament = activeTournamentId ? tournaments[activeTournamentId] : null;
 
     const handleGenerate = async () => {
@@ -59,6 +81,10 @@ export const TournamentGenerator: React.FC<TournamentGeneratorProps> = ({ member
                 }
                 filteredPlayers = members.filter(m => activeMixedLevels.includes(m.skillLevel));
                 tournamentName = `${activeMixedLevels.map(l => l.replace('M','').replace('W','')).join('+')}급 혼합`;
+                break;
+            case 'byClub':
+                filteredPlayers = members.filter(m => m.club === selectedClub);
+                tournamentName = CLUBS.find(c => c.value === selectedClub)?.label || selectedClub;
                 break;
         }
 
@@ -123,7 +149,6 @@ export const TournamentGenerator: React.FC<TournamentGeneratorProps> = ({ member
     const handleDelete = () => {
         if (activeTournamentId && window.confirm(`'${activeTournament?.name}' 대진표를 삭제하시겠습니까?`)) {
             onDelete(activeTournamentId);
-            setActiveTournamentId(null);
         }
     }
     
@@ -137,6 +162,10 @@ export const TournamentGenerator: React.FC<TournamentGeneratorProps> = ({ member
                 return <select value={selectedGender} onChange={e => setSelectedGender(e.target.value as Gender)} className="p-2 border-gray-300 rounded-md bg-brand-blue text-white focus:ring-brand-secondary">
                     <option value={Gender.MALE} style={{ backgroundColor: '#0077b6', color: 'white' }}>남자</option>
                     <option value={Gender.FEMALE} style={{ backgroundColor: '#0077b6', color: 'white' }}>여자</option>
+                </select>;
+            case 'byClub':
+                return <select value={selectedClub} onChange={e => setSelectedClub(e.target.value as Club)} className="p-2 border-gray-300 rounded-md bg-brand-blue text-white focus:ring-brand-secondary">
+                    {CLUBS.map(c => <option key={c.value} value={c.value} style={{ backgroundColor: '#0077b6', color: 'white' }}>{c.label}</option>)}
                 </select>;
             case 'mixed':
                 return <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -153,6 +182,7 @@ export const TournamentGenerator: React.FC<TournamentGeneratorProps> = ({ member
     }
 
     const isAdmin = currentUser.role === Role.ADMIN;
+    const isSuperAdmin = currentUser.name === SUPER_ADMIN_NAME;
 
     return (
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-6xl mx-auto space-y-8">
@@ -167,6 +197,9 @@ export const TournamentGenerator: React.FC<TournamentGeneratorProps> = ({ member
                                 <div className="flex flex-col space-y-2">
                                     <label><input type="radio" name="mode" value="level" checked={mode === 'level'} onChange={() => setMode('level')} className="mr-2"/> 등급별</label>
                                     <label><input type="radio" name="mode" value="combined" checked={mode === 'combined'} onChange={() => setMode('combined')} className="mr-2"/> 통합</label>
+                                    {isSuperAdmin && (
+                                        <label><input type="radio" name="mode" value="byClub" checked={mode === 'byClub'} onChange={() => setMode('byClub')} className="mr-2"/> 클럽별</label>
+                                    )}
                                     <label><input type="radio" name="mode" value="gender" checked={mode === 'gender'} onChange={() => setMode('gender')} className="mr-2"/> 성별</label>
                                     <label><input type="radio" name="mode" value="mixed" checked={mode === 'mixed'} onChange={() => setMode('mixed')} className="mr-2"/> 등급 혼합</label>
                                 </div>

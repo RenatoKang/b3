@@ -257,7 +257,6 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
                 viewMode === 'grid' ? (
                     <div className="space-y-8">
                         {Object.entries(processedMembers.data).map(([groupName, groupMembers]) => {
-                            // FIX: Explicitly cast groupMembers to Member[] to help TypeScript's type inference.
                             const membersInGroup = groupMembers as Member[];
                             return (
                             <div key={groupName}>
@@ -289,7 +288,6 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {Object.entries(processedMembers.data).map(([groupName, groupMembers]) => {
-                                        // FIX: Explicitly cast groupMembers to Member[] to help TypeScript's type inference.
                                         const membersInGroup = groupMembers as Member[];
                                         return (
                                         <React.Fragment key={groupName}>

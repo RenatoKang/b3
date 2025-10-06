@@ -1,7 +1,7 @@
 
-import React, { useState, useMemo } from 'react';
-import { SkillLevel, GameType, Gender, Role } from '../types.js';
-import { SKILL_LEVELS } from '../constants.js';
+import React, { useState, useMemo, useEffect } from 'react';
+import { SkillLevel, GameType, Gender, Role, Club } from '../types.js';
+import { SKILL_LEVELS, CLUBS, SUPER_ADMIN_NAME } from '../constants.js';
 import { generateBracket } from '../services/geminiService.js';
 import { BracketDisplay } from './BracketDisplay.js';
 
@@ -9,6 +9,7 @@ export const TournamentGenerator = ({ members, tournaments, onAdd, onUpdate, onD
     const [mode, setMode] = useState('level');
     const [selectedLevel, setSelectedLevel] = useState(SkillLevel.MA);
     const [selectedGender, setSelectedGender] = useState(Gender.MALE);
+    const [selectedClub, setSelectedClub] = useState(CLUBS[0].value);
     const [mixedLevels, setMixedLevels] = useState(
         () => SKILL_LEVELS.reduce((acc, level) => ({...acc, [level.value]: false}), {})
     );
@@ -17,7 +18,26 @@ export const TournamentGenerator = ({ members, tournaments, onAdd, onUpdate, onD
     const [error, setError] = useState(null);
     const [activeTournamentId, setActiveTournamentId] = useState(null);
 
-    const tournamentList = useMemo(() => Object.values(tournaments), [tournaments]);
+    const tournamentList = useMemo(() => {
+        // Sort by ID descending (newest first) since the ID contains a timestamp.
+        return Object.values(tournaments).sort((a, b) => b.id.localeCompare(a.id));
+    }, [tournaments]);
+
+    useEffect(() => {
+        const isTournamentListEmpty = tournamentList.length === 0;
+        const isCurrentTournamentValid = activeTournamentId && tournaments[activeTournamentId];
+
+        if (!isCurrentTournamentValid) {
+            if (!isTournamentListEmpty) {
+                // If current selection is invalid (e.g., deleted) and list is not empty, select the newest one.
+                setActiveTournamentId(tournamentList[0].id);
+            } else if (activeTournamentId !== null) {
+                // If list is empty, ensure activeTournamentId is null.
+                setActiveTournamentId(null);
+            }
+        }
+    }, [tournamentList, tournaments, activeTournamentId]);
+
     const activeTournament = activeTournamentId ? tournaments[activeTournamentId] : null;
 
     const handleGenerate = async () => {
@@ -49,6 +69,10 @@ export const TournamentGenerator = ({ members, tournaments, onAdd, onUpdate, onD
                 }
                 filteredPlayers = members.filter(m => activeMixedLevels.includes(m.skillLevel));
                 tournamentName = `${activeMixedLevels.map(l => l.replace('M','').replace('W','')).join('+')}급 혼합`;
+                break;
+            case 'byClub':
+                filteredPlayers = members.filter(m => m.club === selectedClub);
+                tournamentName = CLUBS.find(c => c.value === selectedClub)?.label || selectedClub;
                 break;
         }
 
@@ -113,7 +137,6 @@ export const TournamentGenerator = ({ members, tournaments, onAdd, onUpdate, onD
     const handleDelete = () => {
         if (activeTournamentId && window.confirm(`'${activeTournament?.name}' 대진표를 삭제하시겠습니까?`)) {
             onDelete(activeTournamentId);
-            setActiveTournamentId(null);
         }
     }
     
@@ -127,6 +150,10 @@ export const TournamentGenerator = ({ members, tournaments, onAdd, onUpdate, onD
                 return React.createElement('select', { value: selectedGender, onChange: e => setSelectedGender(e.target.value), className: "p-2 border-gray-300 rounded-md bg-brand-blue text-white focus:ring-brand-secondary" },
                     React.createElement('option', { value: Gender.MALE, style: { backgroundColor: '#0077b6', color: 'white' } }, "남자"),
                     React.createElement('option', { value: Gender.FEMALE, style: { backgroundColor: '#0077b6', color: 'white' } }, "여자")
+                );
+            case 'byClub':
+                return React.createElement('select', { value: selectedClub, onChange: e => setSelectedClub(e.target.value), className: "p-2 border-gray-300 rounded-md bg-brand-blue text-white focus:ring-brand-secondary" },
+                    CLUBS.map(c => React.createElement('option', { key: c.value, value: c.value, style: { backgroundColor: '#0077b6', color: 'white' } }, c.label))
                 );
             case 'mixed':
                 return React.createElement('div', { className: "flex flex-wrap gap-x-4 gap-y-2" },
@@ -143,6 +170,7 @@ export const TournamentGenerator = ({ members, tournaments, onAdd, onUpdate, onD
     }
 
     const isAdmin = currentUser.role === Role.ADMIN;
+    const isSuperAdmin = currentUser.name === SUPER_ADMIN_NAME;
 
     return (
         React.createElement('div', { className: "bg-white p-6 rounded-lg shadow-lg max-w-6xl mx-auto space-y-8" },
@@ -156,6 +184,9 @@ export const TournamentGenerator = ({ members, tournaments, onAdd, onUpdate, onD
                                 React.createElement('div', { className: "flex flex-col space-y-2" },
                                     React.createElement('label', null, React.createElement('input', { type: "radio", name: "mode", value: "level", checked: mode === 'level', onChange: () => setMode('level'), className: "mr-2" }), " 등급별"),
                                     React.createElement('label', null, React.createElement('input', { type: "radio", name: "mode", value: "combined", checked: mode === 'combined', onChange: () => setMode('combined'), className: "mr-2" }), " 통합"),
+                                    isSuperAdmin && (
+                                        React.createElement('label', null, React.createElement('input', { type: "radio", name: "mode", value: "byClub", checked: mode === 'byClub', onChange: () => setMode('byClub'), className: "mr-2" }), " 클럽별")
+                                    ),
                                     React.createElement('label', null, React.createElement('input', { type: "radio", name: "mode", value: "gender", checked: mode === 'gender', onChange: () => setMode('gender'), className: "mr-2" }), " 성별"),
                                     React.createElement('label', null, React.createElement('input', { type: "radio", name: "mode", value: "mixed", checked: mode === 'mixed', onChange: () => setMode('mixed'), className: "mr-2" }), " 등급 혼합")
                                 ),
