@@ -194,6 +194,10 @@ export const MemberForm: React.FC<MemberFormProps> = ({ onUpdate, onCancel, exis
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             
+            if (!user) {
+                throw new Error("User creation failed.");
+            }
+
             const months = getRelevantMonths();
             const newDues: Record<string, boolean> = {};
             months.forEach(m => { newDues[m] = false; });

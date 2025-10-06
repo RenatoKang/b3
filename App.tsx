@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Member, View, Tournament, Role, CurrentUser } from './types';
 import { Header } from './components/Header';
@@ -11,7 +12,7 @@ import { ProfilePage } from './components/ProfilePage';
 import { ADMIN_NAMES, SUPER_ADMIN_NAME } from './constants';
 import { auth, db } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, doc, getDoc, onSnapshot, query, orderBy, setDoc, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, query, orderBy, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 
 
 const getRelevantMonths = (): string[] => {
@@ -44,6 +45,7 @@ const App: React.FC = () => {
           const memberData = memberDocSnap.data() as Omit<Member, 'id'>;
           const role = ADMIN_NAMES.includes(memberData.name) ? Role.ADMIN : Role.MEMBER;
           setCurrentUser({ ...memberData, id: user.uid, role });
+          setView(View.DUES); // Set default view on login
         } else {
           console.error("No member profile found for this user in Firestore.");
           await signOut(auth);
@@ -160,7 +162,7 @@ const App: React.FC = () => {
   
   const handleNavigate = (newView: View) => {
     setEditingMember(null);
-    if (newView === View.PROFILE) {
+    if (newView === View.PROFILE && currentUser) {
         setEditingMember(currentUser);
     }
     setView(newView);

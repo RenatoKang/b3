@@ -9,6 +9,7 @@ import { DuesTracker } from './components/DuesTracker.js';
 import { TournamentGenerator } from './components/TournamentGenerator.js';
 import { TrainingPlanner } from './components/TrainingPlanner.js';
 import { Login } from './components/Login.js';
+import { ProfilePage } from './components/ProfilePage.js';
 import { ADMIN_NAMES, SUPER_ADMIN_NAME } from './constants.js';
 import { auth, db } from './services/firebase.js';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -32,6 +33,7 @@ const App = () => {
           const memberData = memberDocSnap.data();
           const role = ADMIN_NAMES.includes(memberData.name) ? Role.ADMIN : Role.MEMBER;
           setCurrentUser({ ...memberData, id: user.uid, role });
+          setView(View.DUES); // FIX: Set default view on login
         } else {
           console.error("No member profile found for this user in Firestore.");
           await signOut(auth);
@@ -75,8 +77,6 @@ const App = () => {
   const filteredMembers = useMemo(() => {
     if (!currentUser) return [];
 
-    // Defensively filter out any members that are null, or missing critical 'id' or 'name' properties.
-    // This prevents crashes in rendering components if the data from Firestore is malformed.
     const cleanMembers = members.filter(m => m && m.id && m.name);
 
     if (currentUser.name === SUPER_ADMIN_NAME) {
@@ -108,7 +108,7 @@ const App = () => {
     }
 
     setEditingMember(null);
-    setView(View.MEMBERS);
+    setView(View.PROFILE); 
   };
   
   const handleEditMember = (member) => {
@@ -142,6 +142,9 @@ const App = () => {
   
   const handleNavigate = (newView) => {
     setEditingMember(null);
+    if (newView === View.PROFILE && currentUser) {
+        setEditingMember(currentUser);
+    }
     setView(newView);
   };
   
@@ -186,7 +189,7 @@ const App = () => {
         return React.createElement(MemberForm, { 
             onUpdate: handleUpdateMember, 
             existingMember: editingMember, 
-            onCancel: () => setView(View.MEMBERS),
+            onCancel: () => editingMember?.id === currentUser.id ? setView(View.PROFILE) : setView(View.MEMBERS),
             isEditingSelf: !!(editingMember && currentUser && editingMember.id === currentUser.id),
             currentUserRole: currentUser.role
         });
@@ -203,6 +206,8 @@ const App = () => {
         });
       case View.TRAINING:
         return React.createElement(TrainingPlanner, { currentUser: currentUser });
+      case View.PROFILE:
+        return React.createElement(ProfilePage, { currentUser: currentUser, onEdit: () => handleEditMember(currentUser) });
       case View.MEMBERS:
       default:
         return React.createElement(MemberList, { members: filteredMembers, onEdit: handleEditMember, onDelete: handleDeleteMember, currentUser: currentUser });
