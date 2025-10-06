@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Role } from '../types.js';
-import { SKILL_LEVELS } from '../constants.js';
+import { SKILL_LEVELS, SUPER_ADMIN_NAME, CLUBS } from '../constants.js';
 
 const UserIcon = ({ className }) => (
     React.createElement('svg', { className: className, xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", strokeWidth: 1.5, stroke: "currentColor" },
@@ -28,8 +28,100 @@ const getCurrentMonth = () => {
     return `${year}-${month}`;
 }
 
+const MemberCard = ({ member, onEdit, onDelete, currentUser }) => {
+    const currentMonth = getCurrentMonth();
+    const duesPaidThisMonth = member.dues?.[currentMonth] ?? false;
+    const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
+    return (
+        React.createElement('div', { key: member.id, className: "bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col" },
+            React.createElement('div', { className: "h-40 bg-gray-200 flex items-center justify-center" },
+                member.profilePicUrl ? (
+                    React.createElement('img', { src: member.profilePicUrl, alt: member.name, className: "w-full h-full object-cover" })
+                ) : (
+                    React.createElement(UserIcon, { className: "w-20 h-20 text-gray-400" })
+                )
+            ),
+            React.createElement('div', { className: "p-4 flex-grow" },
+                React.createElement('h3', { className: "text-xl font-bold text-brand-blue" }, member.name),
+                React.createElement('p', { className: "text-gray-500 text-sm" }, member.club),
+                React.createElement('p', { className: "text-gray-600 text-sm truncate", title: member.email }, member.email),
+                React.createElement('p', { className: "text-gray-600 text-sm" }, `${member.age}세, ${member.gender}`),
+                React.createElement('div', { className: "mt-2" },
+                    React.createElement('span', { className: "inline-block bg-brand-light text-brand-blue text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full" },
+                        `등급: ${skillLabel}`
+                    ),
+                    React.createElement('span', { className: `inline-block text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full ${duesPaidThisMonth ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}` },
+                        `금월 회비: ${duesPaidThisMonth ? '납부' : '미납'}`
+                    )
+                )
+            ),
+            React.createElement('div', { className: "px-4 py-2 bg-gray-50 flex justify-end space-x-2 h-12 items-center" },
+                currentUser.role === Role.ADMIN ? (
+                    React.createElement(React.Fragment, null,
+                        React.createElement('button', { onClick: () => onEdit(member), className: "text-sm text-blue-600 hover:text-blue-800 font-medium" }, "Edit"),
+                        React.createElement('button', { onClick: () => onDelete(member.id), className: "text-sm text-red-600 hover:text-red-800 font-medium" }, "Delete")
+                    )
+                ) : currentUser.id === member.id ? (
+                    React.createElement('button', { onClick: () => onEdit(member), className: "text-sm text-blue-600 hover:text-blue-800 font-medium" }, "Edit")
+                ) : null
+            )
+        )
+    );
+};
+
+const MemberRow = ({ member, onEdit, onDelete, currentUser }) => {
+    const currentMonth = getCurrentMonth();
+    const duesPaidThisMonth = member.dues?.[currentMonth] ?? false;
+    const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
+    return (
+        React.createElement('tr', { key: member.id, className: "hover:bg-gray-50" },
+            React.createElement('td', { className: "px-6 py-4 whitespace-nowrap" },
+                React.createElement('div', { className: "flex items-center" },
+                    React.createElement('div', { className: "flex-shrink-0 h-10 w-10" },
+                        member.profilePicUrl ? (
+                            React.createElement('img', { className: "h-10 w-10 rounded-full object-cover", src: member.profilePicUrl, alt: member.name })
+                        ) : (
+                            React.createElement('div', { className: "h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center" },
+                                React.createElement(UserIcon, { className: "h-6 w-6 text-gray-400" })
+                            )
+                        )
+                    ),
+                    React.createElement('div', { className: "ml-4" },
+                        React.createElement('div', { className: "text-sm font-medium text-gray-900" }, member.name),
+                        React.createElement('div', { className: "text-sm text-gray-500" }, member.gender)
+                    )
+                )
+            ),
+            React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500" }, member.club),
+            React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500 truncate", title: member.email }, member.email),
+            React.createElement('td', { className: "px-6 py-4 whitespace-nowrap" },
+                React.createElement('span', { className: "inline-block bg-brand-light text-brand-blue text-xs font-semibold px-2.5 py-0.5 rounded-full" },
+                    skillLabel
+                )
+            ),
+            React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500" }, `${member.age}세`),
+            React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-center" },
+                 React.createElement('span', { className: `inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${duesPaidThisMonth ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}` },
+                    duesPaidThisMonth ? '납부' : '미납'
+                )
+            ),
+            React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4" },
+                currentUser.role === Role.ADMIN ? (
+                    React.createElement(React.Fragment, null,
+                        React.createElement('button', { onClick: () => onEdit(member), className: "text-blue-600 hover:text-blue-900" }, "Edit"),
+                        React.createElement('button', { onClick: () => onDelete(member.id), className: "text-red-600 hover:text-red-900" }, "Delete")
+                    )
+                ) : currentUser.id === member.id ? (
+                    React.createElement('button', { onClick: () => onEdit(member), className: "text-blue-600 hover:text-blue-900" }, "Edit")
+                ) : null
+            )
+        )
+    );
+};
+
 export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
     const [viewMode, setViewMode] = useState('list');
+    const [displayMode, setDisplayMode] = useState('alphabetical');
     
     if (members.length === 0) {
         return (
@@ -39,127 +131,48 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
             )
         )
     }
+    
+    const processedMembers = useMemo(() => {
+        const sorted = [...members].sort((a, b) => a.name.localeCompare(b.name));
+        
+        if (currentUser.name !== SUPER_ADMIN_NAME || displayMode === 'alphabetical') {
+            return { type: 'flat', data: sorted };
+        }
 
-    const currentMonth = getCurrentMonth();
-    const sortedMembers = [...members].sort((a,b) => a.name.localeCompare(b.name));
+        if (displayMode === 'byClub') {
+            const groups = {};
+            CLUBS.forEach(club => {
+                const membersInClub = sorted.filter(m => m.club === club.value);
+                if (membersInClub.length > 0) {
+                    groups[club.label] = membersInClub;
+                }
+            });
+            return { type: 'grouped', data: groups };
+        }
 
-    const renderGridView = () => (
-        React.createElement('div', { className: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" },
-            sortedMembers.map(member => {
-                const duesPaidThisMonth = member.dues?.[currentMonth] ?? false;
-                const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
-                return (
-                    React.createElement('div', { key: member.id, className: "bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col" },
-                        React.createElement('div', { className: "h-40 bg-gray-200 flex items-center justify-center" },
-                            member.profilePicUrl ? (
-                                React.createElement('img', { src: member.profilePicUrl, alt: member.name, className: "w-full h-full object-cover" })
-                            ) : (
-                                React.createElement(UserIcon, { className: "w-20 h-20 text-gray-400" })
-                            )
-                        ),
-                        React.createElement('div', { className: "p-4 flex-grow" },
-                            React.createElement('h3', { className: "text-xl font-bold text-brand-blue" }, member.name),
-                            React.createElement('p', { className: "text-gray-500 text-sm" }, member.club),
-                            React.createElement('p', { className: "text-gray-600 text-sm truncate", title: member.email }, member.email),
-                            React.createElement('p', { className: "text-gray-600 text-sm" }, `${member.age}세, ${member.gender}`),
-                            React.createElement('div', { className: "mt-2" },
-                                React.createElement('span', { className: "inline-block bg-brand-light text-brand-blue text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full" },
-                                    `등급: ${skillLabel}`
-                                ),
-                                React.createElement('span', { className: `inline-block text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full ${duesPaidThisMonth ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}` },
-                                    `금월 회비: ${duesPaidThisMonth ? '납부' : '미납'}`
-                                )
-                            )
-                        ),
-                        React.createElement('div', { className: "px-4 py-2 bg-gray-50 flex justify-end space-x-2 h-12 items-center" },
-                           currentUser.role === Role.ADMIN ? (
-                                React.createElement(React.Fragment, null,
-                                    React.createElement('button', { onClick: () => onEdit(member), className: "text-sm text-blue-600 hover:text-blue-800 font-medium" }, "Edit"),
-                                    React.createElement('button', { onClick: () => onDelete(member.id), className: "text-sm text-red-600 hover:text-red-800 font-medium" }, "Delete")
-                                )
-                            ) : currentUser.id === member.id ? (
-                                React.createElement('button', { onClick: () => onEdit(member), className: "text-sm text-blue-600 hover:text-blue-800 font-medium" }, "Edit")
-                            ) : null
-                        )
-                    )
-                );
-            })
-        )
-    );
+        if (displayMode === 'byLevel') {
+            const groups = {};
+            SKILL_LEVELS.forEach(level => {
+                const membersInLevel = sorted.filter(m => m.skillLevel === level.value);
+                if (membersInLevel.length > 0) {
+                    groups[level.label] = membersInLevel;
+                }
+            });
+            return { type: 'grouped', data: groups };
+        }
+        
+        return { type: 'flat', data: sorted };
+    }, [members, displayMode, currentUser.name]);
 
-    const renderListView = () => (
-        React.createElement('div', { className: "bg-white rounded-lg shadow-lg overflow-hidden" },
-            React.createElement('div', { className: "overflow-x-auto" },
-                React.createElement('table', { className: "min-w-full divide-y divide-gray-200" },
-                    React.createElement('thead', { className: "bg-gray-50" },
-                        React.createElement('tr', null,
-                            React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이름"),
-                            React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "소속 클럽"),
-                            React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이메일"),
-                            React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "등급"),
-                            React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "나이"),
-                            React.createElement('th', { scope: "col", className: "px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" }, "금월 회비"),
-                            React.createElement('th', { scope: "col", className: "px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" }, "관리")
-                        )
-                    ),
-                    React.createElement('tbody', { className: "bg-white divide-y divide-gray-200" },
-                        sortedMembers.map(member => {
-                            const duesPaidThisMonth = member.dues?.[currentMonth] ?? false;
-                            const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
-                            return (
-                                React.createElement('tr', { key: member.id, className: "hover:bg-gray-50" },
-                                    React.createElement('td', { className: "px-6 py-4 whitespace-nowrap" },
-                                        React.createElement('div', { className: "flex items-center" },
-                                            React.createElement('div', { className: "flex-shrink-0 h-10 w-10" },
-                                                member.profilePicUrl ? (
-                                                    React.createElement('img', { className: "h-10 w-10 rounded-full object-cover", src: member.profilePicUrl, alt: member.name })
-                                                ) : (
-                                                    React.createElement('div', { className: "h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center" },
-                                                        React.createElement(UserIcon, { className: "h-6 w-6 text-gray-400" })
-                                                    )
-                                                )
-                                            ),
-                                            React.createElement('div', { className: "ml-4" },
-                                                React.createElement('div', { className: "text-sm font-medium text-gray-900" }, member.name),
-                                                React.createElement('div', { className: "text-sm text-gray-500" }, member.gender)
-                                            )
-                                        )
-                                    ),
-                                    React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500" }, member.club),
-                                    React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500 truncate", title: member.email }, member.email),
-                                    React.createElement('td', { className: "px-6 py-4 whitespace-nowrap" },
-                                        React.createElement('span', { className: "inline-block bg-brand-light text-brand-blue text-xs font-semibold px-2.5 py-0.5 rounded-full" },
-                                            skillLabel
-                                        )
-                                    ),
-                                    React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500" }, `${member.age}세`),
-                                    React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-center" },
-                                         React.createElement('span', { className: `inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${duesPaidThisMonth ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}` },
-                                            duesPaidThisMonth ? '납부' : '미납'
-                                        )
-                                    ),
-                                    React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4" },
-                                        currentUser.role === Role.ADMIN ? (
-                                            React.createElement(React.Fragment, null,
-                                                React.createElement('button', { onClick: () => onEdit(member), className: "text-blue-600 hover:text-blue-900" }, "Edit"),
-                                                React.createElement('button', { onClick: () => onDelete(member.id), className: "text-red-600 hover:text-red-900" }, "Delete")
-                                            )
-                                        ) : currentUser.id === member.id ? (
-                                            React.createElement('button', { onClick: () => onEdit(member), className: "text-blue-600 hover:text-blue-900" }, "Edit")
-                                        ) : null
-                                    )
-                                )
-                            );
-                        })
-                    )
-                )
-            )
-        )
-    );
+    const displayOptions = [
+        { key: 'alphabetical', label: '이름순' },
+        { key: 'byClub', label: '클럽별' },
+        { key: 'byLevel', label: '등급별' },
+    ];
 
     return (
         React.createElement('div', null,
-            React.createElement('div', { className: "flex justify-between items-center mb-6" },
+            React.createElement('div', { className: "flex justify-between items-center mb-4" },
                 React.createElement('h2', { className: "text-xl font-bold text-gray-700" }, `총 회원: ${members.length}명`),
                 React.createElement('div', { className: "flex items-center space-x-2" },
                     React.createElement('button',
@@ -182,7 +195,108 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
                     )
                 )
             ),
-            viewMode === 'grid' ? renderGridView() : renderListView()
+
+            currentUser.name === SUPER_ADMIN_NAME && (
+                React.createElement('div', { className: "flex items-center space-x-2 mb-6 bg-gray-100 p-2 rounded-lg" },
+                    React.createElement('span', { className: "text-sm font-medium text-gray-700 mr-2" }, "보기 방식:"),
+                    displayOptions.map(opt => (
+                        React.createElement('button',
+                            {
+                                key: opt.key,
+                                onClick: () => setDisplayMode(opt.key),
+                                className: `px-3 py-1 text-sm font-semibold rounded-md transition-colors ${
+                                    displayMode === opt.key 
+                                    ? 'bg-brand-blue text-white' 
+                                    : 'bg-white text-gray-600 hover:bg-gray-200'
+                                }`
+                            },
+                            opt.label
+                        )
+                    ))
+                )
+            ),
+            
+            processedMembers.type === 'flat' ? (
+                viewMode === 'grid' ? (
+                     React.createElement('div', { className: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" },
+                        processedMembers.data.map(member => (
+                            React.createElement(MemberCard, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
+                        ))
+                    )
+                ) : (
+                    React.createElement('div', { className: "bg-white rounded-lg shadow-lg overflow-hidden" },
+                        React.createElement('div', { className: "overflow-x-auto" },
+                            React.createElement('table', { className: "min-w-full divide-y divide-gray-200" },
+                                React.createElement('thead', { className: "bg-gray-50" },
+                                    React.createElement('tr', null,
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이름"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "소속 클럽"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이메일"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "등급"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "나이"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" }, "금월 회비"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" }, "관리")
+                                    )
+                                ),
+                                React.createElement('tbody', { className: "bg-white divide-y divide-gray-200" },
+                                    processedMembers.data.map(member => (
+                                        React.createElement(MemberRow, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
+                                    ))
+                                )
+                            )
+                        )
+                    )
+                )
+            ) : ( // Grouped view
+                viewMode === 'grid' ? (
+                    React.createElement('div', { className: "space-y-8" },
+                        Object.entries(processedMembers.data).map(([groupName, groupMembers]) => (
+                            React.createElement('div', { key: groupName },
+                                React.createElement('h3', { className: "text-xl font-bold text-gray-800 border-b-2 border-brand-blue pb-2 mb-4" },
+                                    `${groupName} `, React.createElement('span', { className: "font-normal text-base text-gray-600" }, `(${groupMembers.length}명)`)
+                                ),
+                                React.createElement('div', { className: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" },
+                                    groupMembers.map(member => (
+                                        React.createElement(MemberCard, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
+                                    ))
+                                )
+                            )
+                        ))
+                    )
+                ) : ( // Grouped List View
+                    React.createElement('div', { className: "bg-white rounded-lg shadow-lg overflow-hidden" },
+                        React.createElement('div', { className: "overflow-x-auto" },
+                            React.createElement('table', { className: "min-w-full divide-y divide-gray-200" },
+                                React.createElement('thead', { className: "bg-gray-50" },
+                                    React.createElement('tr', null,
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이름"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "소속 클럽"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이메일"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "등급"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "나이"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" }, "금월 회비"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" }, "관리")
+                                    )
+                                ),
+                                React.createElement('tbody', { className: "bg-white divide-y divide-gray-200" },
+                                    Object.entries(processedMembers.data).map(([groupName, groupMembers]) => (
+                                        React.createElement(React.Fragment, { key: groupName },
+                                            React.createElement('tr', null,
+                                                React.createElement('th', { colSpan: 7, className: "px-4 py-2 bg-brand-light text-left text-base font-bold text-brand-blue" },
+                                                    `${groupName} (${groupMembers.length}명)`
+                                                )
+                                            ),
+                                            groupMembers.map(member => (
+                                                React.createElement(MemberRow, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
+                                            ))
+                                        )
+                                    ))
+                                )
+                            )
+                        )
+                    )
+                )
+            )
         )
     );
 };
