@@ -59,6 +59,7 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
                         ),
                         React.createElement('div', { className: "p-4 flex-grow" },
                             React.createElement('h3', { className: "text-xl font-bold text-brand-blue" }, member.name),
+                            React.createElement('p', { className: "text-gray-500 text-sm" }, member.club),
                             React.createElement('p', { className: "text-gray-600 text-sm truncate", title: member.email }, member.email),
                             React.createElement('p', { className: "text-gray-600 text-sm" }, `${member.age}세, ${member.gender}`),
                             React.createElement('div', { className: "mt-2" },
@@ -93,6 +94,7 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
                     React.createElement('thead', { className: "bg-gray-50" },
                         React.createElement('tr', null,
                             React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이름"),
+                            React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "소속 클럽"),
                             React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이메일"),
                             React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "등급"),
                             React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "나이"),
@@ -123,6 +125,7 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
                                             )
                                         )
                                     ),
+                                    React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500" }, member.club),
                                     React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500 truncate", title: member.email }, member.email),
                                     React.createElement('td', { className: "px-6 py-4 whitespace-nowrap" },
                                         React.createElement('span', { className: "inline-block bg-brand-light text-brand-blue text-xs font-semibold px-2.5 py-0.5 rounded-full" },

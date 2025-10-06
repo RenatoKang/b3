@@ -90,6 +90,7 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
                                 </div>
                                 <div className="p-4 flex-grow">
                                     <h3 className="text-xl font-bold text-brand-blue">{member.name}</h3>
+                                    <p className="text-gray-500 text-sm">{member.club}</p>
                                     <p className="text-gray-600 text-sm truncate" title={member.email}>{member.email}</p>
                                     <p className="text-gray-600 text-sm">{member.age}세, {member.gender}</p>
                                     <div className="mt-2">
@@ -122,6 +123,7 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이름</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">소속 클럽</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이메일</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">등급</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">나이</th>
@@ -152,6 +154,7 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
                                                     </div>
                                                 </div>
                                             </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.club}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 truncate" title={member.email}>{member.email}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="inline-block bg-brand-light text-brand-blue text-xs font-semibold px-2.5 py-0.5 rounded-full">

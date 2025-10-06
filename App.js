@@ -1,13 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Role } from './types.js';
 import { Header } from './components/Header.js';
 import { MemberList } from './components/MemberList.js';
 import { MemberForm } from './components/MemberForm.js';
 import { DuesTracker } from './components/DuesTracker.js';
 import { TournamentGenerator } from './components/TournamentGenerator.js';
+import { TrainingPlanner } from './components/TrainingPlanner.js';
 import { Login } from './components/Login.js';
-import { ADMIN_NAMES } from './constants.js';
+import { ADMIN_NAMES, SUPER_ADMIN_NAME } from './constants.js';
 import { auth, db } from './services/firebase.js';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, doc, getDoc, onSnapshot, query, orderBy, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
@@ -69,6 +70,17 @@ const App = () => {
       unsubscribeTournaments();
     };
   }, [currentUser]);
+  
+  const filteredMembers = useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.name === SUPER_ADMIN_NAME) {
+        return members;
+    }
+    if (currentUser.club) {
+        return members.filter(member => member.club === currentUser.club);
+    }
+    return members.filter(member => member.id === currentUser.id);
+  }, [members, currentUser]);
 
   const handleLogout = async () => {
     try {
@@ -173,19 +185,21 @@ const App = () => {
             currentUserRole: currentUser.role
         });
       case View.DUES:
-        return React.createElement(DuesTracker, { members: members, onToggleDues: handleToggleDues, currentUser: currentUser });
+        return React.createElement(DuesTracker, { members: filteredMembers, onToggleDues: handleToggleDues, currentUser: currentUser });
       case View.TOURNAMENT:
         return React.createElement(TournamentGenerator, { 
-            members: members, 
+            members: filteredMembers, 
             tournaments: tournaments, 
             onAdd: handleAddTournament, 
             onUpdate: handleUpdateTournament, 
             onDelete: handleDeleteTournament,
             currentUser: currentUser
         });
+      case View.TRAINING:
+        return React.createElement(TrainingPlanner, { currentUser: currentUser });
       case View.MEMBERS:
       default:
-        return React.createElement(MemberList, { members: members, onEdit: handleEditMember, onDelete: handleDeleteMember, currentUser: currentUser });
+        return React.createElement(MemberList, { members: filteredMembers, onEdit: handleEditMember, onDelete: handleDeleteMember, currentUser: currentUser });
     }
   };
 
@@ -194,7 +208,7 @@ const App = () => {
       React.createElement(Header, { 
         currentView: view, 
         onNavigate: handleNavigate, 
-        memberCount: members.length, 
+        memberCount: filteredMembers.length, 
         currentUser: currentUser,
         onLogout: handleLogout
        }),

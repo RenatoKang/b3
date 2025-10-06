@@ -1,4 +1,4 @@
-import { SkillLevel } from './types';
+import { SkillLevel, Club } from './types';
 
 export const SKILL_LEVELS: { value: SkillLevel; label: string }[] = [
   { value: SkillLevel.MA, label: '남자 A 급' },
@@ -11,4 +11,16 @@ export const SKILL_LEVELS: { value: SkillLevel; label: string }[] = [
   { value: SkillLevel.WD, label: '여자 D 급' },
 ];
 
+export const CLUBS: { value: Club; label: string }[] = [
+    { value: Club.PEACE, label: '평화' },
+    { value: Club.ANTIOCH, label: '안디옥' },
+    { value: Club.LUZ, label: '루스' },
+    { value: Club.FULL_GOSPEL, label: '순복음' },
+    { value: Club.BONGBAE, label: '봉배' },
+    { value: Club.TIETE, label: '찌에때' },
+    { value: Club.UNAFFILIATED, label: '무등록' },
+];
+
 export const ADMIN_NAMES: string[] = ['박종태', '헤나또', '김성호', '박성실', '정문숙'];
+
+export const SUPER_ADMIN_NAME = '헤나또';

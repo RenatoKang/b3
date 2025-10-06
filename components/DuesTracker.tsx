@@ -43,6 +43,7 @@ export const DuesTracker: React.FC<DuesTrackerProps> = ({ members, onToggleDues,
                     <thead className="bg-gray-50">
                         <tr>
                             <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">이름</th>
+                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">소속 클럽</th>
                             <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">등급</th>
                             {months.map(month => (
                                <th key={month} scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{month}</th>
@@ -55,6 +56,7 @@ export const DuesTracker: React.FC<DuesTrackerProps> = ({ members, onToggleDues,
                             return (
                                 <tr key={member.id}>
                                     <td className="px-4 py-4 whitespace-nowrap sticky left-0 bg-white font-medium text-gray-900">{member.name}</td>
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{member.club}</td>
                                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{skillLabel}</td>
                                     {months.map(month => (
                                         <td key={month} className="px-4 py-4 whitespace-nowrap text-center">

@@ -19,6 +19,16 @@ export enum SkillLevel {
   WD = 'WD',
 }
 
+export enum Club {
+  PEACE = '평화',
+  ANTIOCH = '안디옥',
+  LUZ = '루스',
+  FULL_GOSPEL = '순복음',
+  BONGBAE = '봉배',
+  TIETE = '찌에때',
+  UNAFFILIATED = '무등록',
+}
+
 export interface Member {
   id: string; // Firebase Auth UID
   name: string;
@@ -28,6 +38,7 @@ export interface Member {
   profilePicUrl: string | null;
   skillLevel: SkillLevel;
   dues: Record<string, boolean>;
+  club: Club;
 }
 
 export interface CurrentUser extends Member {
@@ -38,7 +49,8 @@ export enum View {
   MEMBERS = 'MEMBERS',
   ADD_MEMBER = 'ADD_MEMBER',
   DUES = 'DUES',
-  TOURNAMENT = 'TOURNAMENT'
+  TOURNAMENT = 'TOURNAMENT',
+  TRAINING = 'TRAINING',
 }
 
 export enum GameType {

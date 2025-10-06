@@ -70,6 +70,27 @@ export const generateBracket = async (participants: string[]): Promise<{ player1
     }
 };
 
+export const generateTrainingPlan = async (skillLevel: string, focusArea: string): Promise<string> => {
+    const prompt = `
+        You are an expert badminton coach.
+        A player with skill level "${skillLevel}" wants to improve their "${focusArea}".
+        Provide 3 to 5 specific, actionable training drills.
+        For each drill, provide a name, a description of how to perform it, and the recommended duration or number of repetitions.
+        Format the response clearly in Korean. Use markdown for headings and lists.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+        return response.text;
+    } catch (error) {
+        console.error("Error generating training plan with Gemini:", error);
+        throw new Error("Failed to generate a training plan. Please try again.");
+    }
+};
+
 const fallbackPairing = (participants: string[]): { player1: string; player2: string | null }[] => {
     console.log("Using fallback pairing mechanism.");
     const shuffled = [...participants].sort(() => Math.random() - 0.5);

@@ -38,6 +38,7 @@ export const DuesTracker = ({ members, onToggleDues, currentUser }) => {
                     React.createElement('thead', { className: "bg-gray-50" },
                         React.createElement('tr', null,
                             React.createElement('th', { scope: "col", className: "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10" }, "이름"),
+                            React.createElement('th', { scope: "col", className: "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "소속 클럽"),
                             React.createElement('th', { scope: "col", className: "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "등급"),
                             months.map(month => (
                                React.createElement('th', { key: month, scope: "col", className: "px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" }, month)
@@ -50,6 +51,7 @@ export const DuesTracker = ({ members, onToggleDues, currentUser }) => {
                             return (
                                 React.createElement('tr', { key: member.id },
                                     React.createElement('td', { className: "px-4 py-4 whitespace-nowrap sticky left-0 bg-white font-medium text-gray-900" }, member.name),
+                                    React.createElement('td', { className: "px-4 py-4 whitespace-nowrap text-sm text-gray-700" }, member.club),
                                     React.createElement('td', { className: "px-4 py-4 whitespace-nowrap text-sm text-gray-700" }, skillLabel),
                                     months.map(month => (
                                         React.createElement('td', { key: month, className: "px-4 py-4 whitespace-nowrap text-center" },

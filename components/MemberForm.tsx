@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Member, Gender, SkillLevel, Role } from '../types';
-import { SKILL_LEVELS } from '../constants';
+import { Member, Gender, SkillLevel, Role, Club } from '../types';
+import { SKILL_LEVELS, CLUBS } from '../constants';
 import { auth, db } from '../services/firebase';
 import { createUserWithEmailAndPassword, updatePassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -79,6 +79,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({ onUpdate, onCancel, exis
     age: 20,
     profilePicUrl: null,
     skillLevel: SkillLevel.MD,
+    club: Club.UNAFFILIATED,
   });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -91,13 +92,13 @@ export const MemberForm: React.FC<MemberFormProps> = ({ onUpdate, onCancel, exis
 
   useEffect(() => {
     if (existingMember) {
-      const { name, gender, age, profilePicUrl, skillLevel, email } = existingMember;
-      setMember({ name, gender, age, profilePicUrl, skillLevel });
+      const { name, gender, age, profilePicUrl, skillLevel, email, club } = existingMember;
+      setMember({ name, gender, age, profilePicUrl, skillLevel, club: club || Club.UNAFFILIATED });
       setEmail(email);
       setPreview(existingMember.profilePicUrl);
     } else {
       setMember({
-        name: '', gender: Gender.MALE, age: 20, profilePicUrl: null, skillLevel: SkillLevel.MD,
+        name: '', gender: Gender.MALE, age: 20, profilePicUrl: null, skillLevel: SkillLevel.MD, club: Club.UNAFFILIATED
       });
       setEmail('');
       setPreview(null);
@@ -227,6 +228,21 @@ export const MemberForm: React.FC<MemberFormProps> = ({ onUpdate, onCancel, exis
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">이름</label>
           <input type="text" name="name" id="name" value={member.name} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue" required />
+        </div>
+
+        <div>
+          <label htmlFor="club" className="block text-sm font-medium text-gray-700">소속 클럽</label>
+          <select 
+            name="club" 
+            id="club" 
+            value={member.club} 
+            onChange={handleChange} 
+            className="mt-1 block w-full pl-3 pr-10 py-2 border border-gray-300 focus:outline-none focus:ring-brand-blue focus:border-brand-blue rounded-md shadow-sm"
+          >
+            {CLUBS.map(club => (
+                <option key={club.value} value={club.value}>{club.label}</option>
+            ))}
+          </select>
         </div>
         
         {existingMember ? (

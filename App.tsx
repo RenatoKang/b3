@@ -1,13 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Member, View, Tournament, Role, CurrentUser } from './types';
 import { Header } from './components/Header';
 import { MemberList } from './components/MemberList';
 import { MemberForm } from './components/MemberForm';
 import { DuesTracker } from './components/DuesTracker';
 import { TournamentGenerator } from './components/TournamentGenerator';
+import { TrainingPlanner } from './components/TrainingPlanner';
 import { Login } from './components/Login';
-import { ADMIN_NAMES } from './constants';
+import { ADMIN_NAMES, SUPER_ADMIN_NAME } from './constants';
 import { auth, db } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, doc, getDoc, onSnapshot, query, orderBy, setDoc, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
@@ -82,6 +83,19 @@ const App: React.FC = () => {
       unsubscribeTournaments();
     };
   }, [currentUser]);
+  
+  const filteredMembers = useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.name === SUPER_ADMIN_NAME) {
+        return members;
+    }
+    if (currentUser.club) {
+        return members.filter(member => member.club === currentUser.club);
+    }
+    // Fallback for an authenticated user who somehow has no club assigned (e.g., old data).
+    // They will only see themselves.
+    return members.filter(member => member.id === currentUser.id);
+  }, [members, currentUser]);
 
   const handleLogout = async () => {
     try {
@@ -190,19 +204,21 @@ const App: React.FC = () => {
             currentUserRole={currentUser.role}
         />;
       case View.DUES:
-        return <DuesTracker members={members} onToggleDues={handleToggleDues} currentUser={currentUser} />;
+        return <DuesTracker members={filteredMembers} onToggleDues={handleToggleDues} currentUser={currentUser} />;
       case View.TOURNAMENT:
         return <TournamentGenerator 
-            members={members} 
+            members={filteredMembers} 
             tournaments={tournaments} 
             onAdd={handleAddTournament} 
             onUpdate={handleUpdateTournament} 
             onDelete={handleDeleteTournament}
             currentUser={currentUser}
         />;
+      case View.TRAINING:
+        return <TrainingPlanner currentUser={currentUser} />;
       case View.MEMBERS:
       default:
-        return <MemberList members={members} onEdit={handleEditMember} onDelete={handleDeleteMember} currentUser={currentUser} />;
+        return <MemberList members={filteredMembers} onEdit={handleEditMember} onDelete={handleDeleteMember} currentUser={currentUser} />;
     }
   };
 
@@ -211,7 +227,7 @@ const App: React.FC = () => {
       <Header 
         currentView={view} 
         onNavigate={handleNavigate} 
-        memberCount={members.length} 
+        memberCount={filteredMembers.length} 
         currentUser={currentUser}
         onLogout={handleLogout}
        />

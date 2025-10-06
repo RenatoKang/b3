@@ -1,4 +1,3 @@
-
 export const Gender = {
   MALE: 'Male',
   FEMALE: 'Female',
@@ -20,11 +19,22 @@ export const SkillLevel = {
   WD: 'WD',
 };
 
+export const Club = {
+  PEACE: '평화',
+  ANTIOCH: '안디옥',
+  LUZ: '루스',
+  FULL_GOSPEL: '순복음',
+  BONGBAE: '봉배',
+  TIETE: '찌에때',
+  UNAFFILIATED: '무등록',
+};
+
 export const View = {
   MEMBERS: 'MEMBERS',
   ADD_MEMBER: 'ADD_MEMBER',
   DUES: 'DUES',
-  TOURNAMENT: 'TOURNAMENT'
+  TOURNAMENT: 'TOURNAMENT',
+  TRAINING: 'TRAINING'
 };
 
 export const GameType = {

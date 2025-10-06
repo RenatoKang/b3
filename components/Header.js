@@ -15,6 +15,7 @@ export const Header = ({ currentView, onNavigate, memberCount, currentUser, onLo
     { view: View.MEMBERS, label: '회원 명단', requiresMembers: true },
     { view: View.DUES, label: '회비 관리', requiresMembers: true },
     { view: View.TOURNAMENT, label: '대진표 생성', requiresMembers: true },
+    { view: View.TRAINING, label: '훈련 계획', requiresMembers: false },
   ];
 
   return (
@@ -29,7 +30,7 @@ export const Header = ({ currentView, onNavigate, memberCount, currentUser, onLo
             React.createElement('div', { className: "flex items-center space-x-4" },
                 React.createElement('div', { className: "text-right text-white" },
                     React.createElement('p', { className: "font-semibold" }, currentUser.name, " 님"),
-                    React.createElement('p', { className: "text-xs opacity-80" }, currentUser.role === 'ADMIN' ? '운영진' : '회원')
+                    React.createElement('p', { className: "text-xs opacity-80" }, `${currentUser.club || '클럽 미지정'} / ${currentUser.role === 'ADMIN' ? '운영진' : '회원'}`)
                 ),
                 React.createElement('button', { onClick: onLogout, className: "text-sm bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded" },
                   "로그아웃"
@@ -37,7 +38,7 @@ export const Header = ({ currentView, onNavigate, memberCount, currentUser, onLo
             )
           )
         ),
-        React.createElement('nav', { className: "flex justify-around p-2 bg-brand-secondary rounded-b-lg" },
+        React.createElement('nav', { className: "flex justify-around p-2 bg-brand-secondary rounded-b-lg space-x-2" },
              navItems.map(item => {
                const isDisabled = item.requiresMembers && memberCount === 0;
                return (
@@ -46,7 +47,7 @@ export const Header = ({ currentView, onNavigate, memberCount, currentUser, onLo
                   key: item.view,
                   onClick: () => onNavigate(item.view),
                   disabled: isDisabled,
-                  className: `px-2 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors w-1/4 ${
+                  className: `px-2 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors flex-1 ${
                     currentView === item.view
                       ? 'bg-shuttle-yellow text-brand-blue'
                       : 'text-white hover:bg-brand-blue'

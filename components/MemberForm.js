@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Gender, SkillLevel, Role } from '../types.js';
-import { SKILL_LEVELS } from '../constants.js';
+import { Gender, SkillLevel, Role, Club } from '../types.js';
+import { SKILL_LEVELS, CLUBS } from '../constants.js';
 import { auth, db } from '../services/firebase.js';
 import { createUserWithEmailAndPassword, updatePassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -69,6 +69,7 @@ export const MemberForm = ({ onUpdate, onCancel, existingMember, isEditingSelf, 
     age: 20,
     profilePicUrl: null,
     skillLevel: SkillLevel.MD,
+    club: Club.UNAFFILIATED,
   });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,13 +81,13 @@ export const MemberForm = ({ onUpdate, onCancel, existingMember, isEditingSelf, 
 
   useEffect(() => {
     if (existingMember) {
-      const { name, gender, age, profilePicUrl, skillLevel, email } = existingMember;
-      setMember({ name, gender, age, profilePicUrl, skillLevel });
+      const { name, gender, age, profilePicUrl, skillLevel, email, club } = existingMember;
+      setMember({ name, gender, age, profilePicUrl, skillLevel, club: club || Club.UNAFFILIATED });
       setEmail(email);
       setPreview(existingMember.profilePicUrl);
     } else {
       setMember({
-        name: '', gender: Gender.MALE, age: 20, profilePicUrl: null, skillLevel: SkillLevel.MD,
+        name: '', gender: Gender.MALE, age: 20, profilePicUrl: null, skillLevel: SkillLevel.MD, club: Club.UNAFFILIATED,
       });
       setEmail('');
       setPreview(null);
@@ -194,65 +195,6 @@ export const MemberForm = ({ onUpdate, onCancel, existingMember, isEditingSelf, 
   };
 
   const isSkillLevelDisabled = isEditingSelf && currentUserRole !== Role.ADMIN;
-  
-  const formFields = [
-    React.createElement('div', { key: 'name', },
-      React.createElement('label', { htmlFor: "name", className: "block text-sm font-medium text-gray-700" }, "이름"),
-      React.createElement('input', { type: "text", name: "name", id: "name", value: member.name, onChange: handleChange, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue", required: true })
-    ),
-  ];
-
-  if (existingMember) {
-      formFields.push(
-          React.createElement('div', { key: 'email-readonly' },
-              React.createElement('label', { htmlFor: "email", className: "block text-sm font-medium text-gray-700" }, "이메일 (변경 불가)"),
-              React.createElement('input', { type: "email", name: "email", id: "email", value: email, readOnly: true, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 cursor-not-allowed" })
-          )
-      );
-  } else {
-      formFields.push(
-        React.createElement(React.Fragment, { key: 'auth-fields' },
-            React.createElement('div', null,
-              React.createElement('label', { htmlFor: "email", className: "block text-sm font-medium text-gray-700" }, "이메일"),
-              React.createElement('input', { type: "email", name: "email", id: "email", value: email, onChange: (e) => setEmail(e.target.value), className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue", required: true })
-            ),
-            React.createElement('div', null,
-              React.createElement('label', { htmlFor: "password", className: "block text-sm font-medium text-gray-700" }, "비밀번호"),
-              React.createElement('input', { type: "password", name: "password", id: "password", value: password, onChange: (e) => setPassword(e.target.value), className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue", required: true })
-            )
-        )
-      );
-  }
-
-  formFields.push(
-    React.createElement('div', { key: 'age-gender', className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
-      React.createElement('div', null,
-        React.createElement('label', { htmlFor: "age", className: "block text-sm font-medium text-gray-700" }, "나이"),
-        React.createElement('input', { type: "number", name: "age", id: "age", value: member.age, onChange: handleChange, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue", required: true })
-      ),
-      React.createElement('div', null,
-        React.createElement('label', { htmlFor: "gender", className: "block text-sm font-medium text-gray-700" }, "성별"),
-        React.createElement('select', { name: "gender", id: "gender", value: member.gender, onChange: handleChange, className: "mt-1 block w-full pl-3 pr-10 py-2 border border-gray-300 focus:outline-none focus:ring-brand-blue focus:border-brand-blue rounded-md shadow-sm" },
-          React.createElement('option', { value: Gender.MALE }, "남자"),
-          React.createElement('option', { value: Gender.FEMALE }, "여자")
-        )
-      )
-    ),
-    React.createElement('div', { key: 'skill' },
-      React.createElement('label', { htmlFor: "skillLevel", className: "block text-sm font-medium text-gray-700" },
-        "등급 ",
-        isSkillLevelDisabled && React.createElement('span', { className: "text-xs text-gray-500" }, "(운영진만 변경 가능)")
-      ),
-      React.createElement('select', {
-        name: "skillLevel", id: "skillLevel", value: member.skillLevel, onChange: handleChange, disabled: isSkillLevelDisabled,
-        className: `mt-1 block w-full pl-3 pr-10 py-2 border border-gray-300 focus:outline-none focus:ring-brand-blue focus:border-brand-blue rounded-md shadow-sm ${isSkillLevelDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`
-      },
-        SKILL_LEVELS.map(level => (
-          React.createElement('option', { key: level.value, value: level.value }, level.label)
-        ))
-      )
-    )
-  );
 
   return (
     React.createElement('div', { className: "bg-white p-8 rounded-lg shadow-lg max-w-2xl mx-auto" },
@@ -267,20 +209,99 @@ export const MemberForm = ({ onUpdate, onCancel, existingMember, isEditingSelf, 
             React.createElement('input', { type: "file", className: "hidden", accept: "image/*", onChange: handleFileChange })
           )
         ),
-        ...formFields,
+        
+        React.createElement('div', null,
+          React.createElement('label', { htmlFor: "name", className: "block text-sm font-medium text-gray-700" }, "이름"),
+          React.createElement('input', { type: "text", name: "name", id: "name", value: member.name, onChange: handleChange, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue", required: true })
+        ),
+
+        React.createElement('div', null,
+          React.createElement('label', { htmlFor: "club", className: "block text-sm font-medium text-gray-700" }, "소속 클럽"),
+          React.createElement('select', { 
+            name: "club", 
+            id: "club", 
+            value: member.club, 
+            onChange: handleChange, 
+            className: "mt-1 block w-full pl-3 pr-10 py-2 border border-gray-300 focus:outline-none focus:ring-brand-blue focus:border-brand-blue rounded-md shadow-sm"
+          },
+            CLUBS.map(club => (
+                React.createElement('option', { key: club.value, value: club.value }, club.label)
+            ))
+          )
+        ),
+        
+        existingMember ? (
+             React.createElement('div', null,
+               React.createElement('label', { htmlFor: "email", className: "block text-sm font-medium text-gray-700" }, "이메일 (변경 불가)"),
+               React.createElement('input', { type: "email", name: "email", id: "email", value: email, readOnly: true, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 cursor-not-allowed" })
+             )
+        ) : (
+            React.createElement(React.Fragment, null,
+                React.createElement('div', null,
+                  React.createElement('label', { htmlFor: "email", className: "block text-sm font-medium text-gray-700" }, "이메일"),
+                  React.createElement('input', { type: "email", name: "email", id: "email", value: email, onChange: (e) => setEmail(e.target.value), className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue", required: true })
+                ),
+                React.createElement('div', null,
+                  React.createElement('label', { htmlFor: "password",className: "block text-sm font-medium text-gray-700" }, "비밀번호"),
+                  React.createElement('input', { type: "password", name: "password", id: "password", value: password, onChange: (e) => setPassword(e.target.value), className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue", required: true })
+                )
+            )
+        ),
+
+        React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
+          React.createElement('div', null,
+            React.createElement('label', { htmlFor: "age", className: "block text-sm font-medium text-gray-700" }, "나이"),
+            React.createElement('input', { type: "number", name: "age", id: "age", value: member.age, onChange: handleChange, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue", required: true })
+          ),
+          React.createElement('div', null,
+            React.createElement('label', { htmlFor: "gender", className: "block text-sm font-medium text-gray-700" }, "성별"),
+            React.createElement('select', { name: "gender", id: "gender", value: member.gender, onChange: handleChange, className: "mt-1 block w-full pl-3 pr-10 py-2 border border-gray-300 focus:outline-none focus:ring-brand-blue focus:border-brand-blue rounded-md shadow-sm" },
+              React.createElement('option', { value: Gender.MALE }, "남자"),
+              React.createElement('option', { value: Gender.FEMALE }, "여자")
+            )
+          )
+        ),
+
+        React.createElement('div', null,
+            React.createElement('label', { htmlFor: "skillLevel", className: "block text-sm font-medium text-gray-700" },
+                "등급 ", isSkillLevelDisabled && React.createElement('span', { className: "text-xs text-gray-500" }, "(운영진만 변경 가능)")
+            ),
+            React.createElement('select',
+                {
+                    name: "skillLevel",
+                    id: "skillLevel",
+                    value: member.skillLevel,
+                    onChange: handleChange,
+                    disabled: isSkillLevelDisabled,
+                    className: `mt-1 block w-full pl-3 pr-10 py-2 border border-gray-300 focus:outline-none focus:ring-brand-blue focus:border-brand-blue rounded-md shadow-sm ${isSkillLevelDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`
+                },
+                SKILL_LEVELS.map(level => (
+                    React.createElement('option', { key: level.value, value: level.value }, level.label)
+                ))
+            )
+        ),
+
         error && React.createElement('p', { className: "text-red-500 text-sm text-center" }, error),
-        isEditingSelf && React.createElement('div', { className: "pt-6 border-t space-y-4" },
+
+        isEditingSelf && (
+          React.createElement('div', { className: "pt-6 border-t space-y-4" },
             React.createElement('h3', { className: "text-lg font-semibold text-gray-800" }, "비밀번호 변경"),
-            React.createElement('div', null,
-                React.createElement('label', { htmlFor: "newPassword", className: "block text-sm font-medium text-gray-700" }, "새 비밀번호 (6자 이상)"),
+             React.createElement('div', null,
+                React.createElement('label', { htmlFor: "newPassword",className: "block text-sm font-medium text-gray-700" }, "새 비밀번호 (6자 이상)"),
                 React.createElement('input', { type: "password", name: "newPassword", id: "newPassword", value: newPassword, onChange: (e) => setNewPassword(e.target.value), className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue" })
             ),
-            React.createElement('div', null,
-                React.createElement('label', { htmlFor: "confirmPassword", className: "block text-sm font-medium text-gray-700" }, "새 비밀번호 확인"),
+             React.createElement('div', null,
+                React.createElement('label', { htmlFor: "confirmPassword",className: "block text-sm font-medium text-gray-700" }, "새 비밀번호 확인"),
                 React.createElement('input', { type: "password", name: "confirmPassword", id: "confirmPassword", value: confirmPassword, onChange: (e) => setConfirmPassword(e.target.value), className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue" })
             ),
-            passwordMessage && React.createElement('p', { className: `text-sm text-center ${passwordMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}` }, passwordMessage.text)
+            passwordMessage && (
+                React.createElement('p', { className: `text-sm text-center ${passwordMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}` },
+                    passwordMessage.text
+                )
+            )
+          )
         ),
+
         React.createElement('div', { className: "flex justify-end space-x-4 pt-4" },
           React.createElement('button', { type: "button", onClick: onCancel, className: "bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-300" }, "Cancel"),
           React.createElement('button', { type: "submit", className: "bg-brand-blue text-white font-bold py-2 px-6 rounded-lg hover:bg-opacity-90" },
