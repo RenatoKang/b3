@@ -1,6 +1,6 @@
 
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Member, CurrentUser, Role } from '../types';
 import { SKILL_LEVELS, SUPER_ADMIN_NAME, CLUBS } from '../constants';
 
@@ -11,7 +11,7 @@ interface MemberListProps {
   currentUser: CurrentUser;
 }
 
-type DisplayMode = 'byClub' | 'byLevel';
+type GroupingMode = 'none' | 'byClub' | 'byLevel';
 
 const UserIcon: React.FC<{className?: string}> = ({ className }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -134,6 +134,24 @@ const MemberRow: React.FC<{member: Member, onEdit: (m: Member) => void, onDelete
 export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelete, currentUser }) => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     
+    const isSuperAdmin = currentUser.name === SUPER_ADMIN_NAME;
+
+    const initialGrouping = useMemo(() => (isSuperAdmin ? 'byClub' : 'none'), [isSuperAdmin]);
+    const [grouping, setGrouping] = useState<GroupingMode>(initialGrouping);
+
+    useEffect(() => {
+        if (!isSuperAdmin) {
+            setGrouping('none');
+        } else {
+            setGrouping('byClub');
+        }
+    }, [isSuperAdmin]);
+
+    const handleGroupingChange = (newGrouping: GroupingMode) => {
+        if (!isSuperAdmin) return;
+        setGrouping(current => (current === newGrouping ? 'none' : newGrouping));
+    };
+
     if (members.length === 0) {
         return (
             <div className="text-center py-12">
@@ -144,23 +162,71 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
     }
     
     const processedMembers = useMemo(() => {
-        const sorted = [...members].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        const sorted = [...members].sort((a, b) => {
+            const nameA = a?.name || '';
+            const nameB = b?.name || '';
+            return nameA.localeCompare(nameB);
+        });
         
-        if (currentUser.name !== SUPER_ADMIN_NAME) {
+        if (grouping === 'none' || !isSuperAdmin) {
             return { type: 'flat' as const, data: sorted };
         }
 
-        // Default to 'byClub' for super admin
         const groups: Record<string, Member[]> = {};
-        CLUBS.forEach(club => {
-            const membersInClub = sorted.filter(m => m.club === club.value);
-            if (membersInClub.length > 0) {
-                groups[club.label] = membersInClub;
-            }
+        const groupLabels = grouping === 'byClub' ? CLUBS : SKILL_LEVELS;
+        const groupingKey: keyof Member = grouping === 'byClub' ? 'club' : 'skillLevel';
+        
+        groupLabels.forEach(item => {
+            groups[item.label] = [];
         });
+        groups['미분류'] = [];
+
+        sorted.forEach(member => {
+            if (!member) return;
+            const memberGroupValue = member[groupingKey];
+            const groupInfo = groupLabels.find(item => item.value === memberGroupValue);
+            const groupLabel = groupInfo ? groupInfo.label : '미분류';
+            groups[groupLabel].push(member);
+        });
+
+        // Filter out empty groups
+        for (const label in groups) {
+            if (groups[label].length === 0) {
+                delete groups[label];
+            }
+        }
+        
         return { type: 'grouped' as const, data: groups };
 
-    }, [members, currentUser.name]);
+    }, [members, grouping, isSuperAdmin]);
+
+    const renderListHeader = () => (
+        <thead className="bg-gray-50">
+            <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이름</th>
+                <th 
+                    scope="col" 
+                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${isSuperAdmin ? 'cursor-pointer hover:bg-gray-200' : ''}`}
+                    onClick={() => handleGroupingChange('byClub')}
+                    title={isSuperAdmin ? "클럽별로 그룹화" : ""}
+                >
+                    소속 클럽 {grouping === 'byClub' && '▾'}
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이메일</th>
+                <th 
+                    scope="col" 
+                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${isSuperAdmin ? 'cursor-pointer hover:bg-gray-200' : ''}`}
+                    onClick={() => handleGroupingChange('byLevel')}
+                    title={isSuperAdmin ? "등급별로 그룹화" : ""}
+                >
+                    등급 {grouping === 'byLevel' && '▾'}
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">나이</th>
+                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">금월 회비</th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+            </tr>
+        </thead>
+    );
 
     return (
         <div>
@@ -197,17 +263,7 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
                     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이름</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">소속 클럽</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이메일</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">등급</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">나이</th>
-                                        <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">금월 회비</th>
-                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
-                                    </tr>
-                                </thead>
+                                {renderListHeader()}
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {processedMembers.data.map(member => (
                                         <MemberRow key={member.id} member={member} onEdit={onEdit} onDelete={onDelete} currentUser={currentUser} />
@@ -220,51 +276,37 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
             ) : ( // Grouped view
                 viewMode === 'grid' ? (
                     <div className="space-y-8">
-                        {Object.entries(processedMembers.data).map(([groupName, groupMembers]) => {
-                            const membersInGroup = groupMembers as Member[];
-                            return (
+                        {Object.entries(processedMembers.data).map(([groupName, groupMembers]) => (
                             <div key={groupName}>
                                 <h3 className="text-xl font-bold text-gray-800 border-b-2 border-brand-blue pb-2 mb-4">
-                                    {groupName} <span className="font-normal text-base text-gray-600">({membersInGroup.length}명)</span>
+                                    {groupName} <span className="font-normal text-base text-gray-600">({groupMembers.length}명)</span>
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                    {membersInGroup.map(member => (
+                                    {groupMembers.map(member => (
                                         <MemberCard key={member.id} member={member} onEdit={onEdit} onDelete={onDelete} currentUser={currentUser} />
                                     ))}
                                 </div>
                             </div>
-                        )})}
+                        ))}
                     </div>
                 ) : ( // Grouped List View
                     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이름</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">소속 클럽</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이메일</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">등급</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">나이</th>
-                                        <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">금월 회비</th>
-                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
-                                    </tr>
-                                </thead>
+                                {renderListHeader()}
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {Object.entries(processedMembers.data).map(([groupName, groupMembers]) => {
-                                        const membersInGroup = groupMembers as Member[];
-                                        return (
+                                    {Object.entries(processedMembers.data).map(([groupName, groupMembers]) => (
                                         <React.Fragment key={groupName}>
                                             <tr>
                                                 <th colSpan={7} className="px-4 py-2 bg-brand-light text-left text-base font-bold text-brand-blue">
-                                                    {groupName} ({membersInGroup.length}명)
+                                                    {groupName} ({groupMembers.length}명)
                                                 </th>
                                             </tr>
-                                            {membersInGroup.map(member => (
+                                            {groupMembers.map(member => (
                                                 <MemberRow key={member.id} member={member} onEdit={onEdit} onDelete={onDelete} currentUser={currentUser} />
                                             ))}
                                         </React.Fragment>
-                                    )})}
+                                    ))}
                                 </tbody>
                             </table>
                         </div>

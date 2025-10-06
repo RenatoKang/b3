@@ -1,6 +1,6 @@
 
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Role } from '../types.js';
 import { SKILL_LEVELS, SUPER_ADMIN_NAME, CLUBS } from '../constants.js';
 
@@ -124,58 +124,112 @@ const MemberRow = ({ member, onEdit, onDelete, currentUser }) => {
 
 export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
     const [viewMode, setViewMode] = useState('list');
-    
+    const isSuperAdmin = currentUser.name === SUPER_ADMIN_NAME;
+
+    const initialGrouping = useMemo(() => (isSuperAdmin ? 'byClub' : 'none'), [isSuperAdmin]);
+    const [grouping, setGrouping] = useState(initialGrouping);
+
+    useEffect(() => {
+        if (!isSuperAdmin) {
+            setGrouping('none');
+        } else {
+            setGrouping('byClub');
+        }
+    }, [isSuperAdmin]);
+
+    const handleGroupingChange = (newGrouping) => {
+        if (!isSuperAdmin) return;
+        setGrouping(current => (current === newGrouping ? 'none' : newGrouping));
+    };
+
     if (members.length === 0) {
         return (
             React.createElement('div', { className: "text-center py-12" },
                 React.createElement('h2', { className: "text-xl font-semibold text-gray-600" }, "No members registered yet."),
                 React.createElement('p', { className: "text-gray-500 mt-2" }, "Go to the 'Register Member' tab to add the first member.")
             )
-        )
+        );
     }
     
     const processedMembers = useMemo(() => {
-        const sorted = [...members].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        const sorted = [...members].sort((a, b) => {
+            const nameA = (a && a.name) || '';
+            const nameB = (b && b.name) || '';
+            return nameA.localeCompare(nameB);
+        });
         
-        if (currentUser.name !== SUPER_ADMIN_NAME) {
+        if (grouping === 'none' || !isSuperAdmin) {
             return { type: 'flat', data: sorted };
         }
 
-        // Default to 'byClub' for super admin
         const groups = {};
-        CLUBS.forEach(club => {
-            const membersInClub = sorted.filter(m => m.club === club.value);
-            if (membersInClub.length > 0) {
-                groups[club.label] = membersInClub;
-            }
-        });
-        return { type: 'grouped', data: groups };
+        const groupLabels = grouping === 'byClub' ? CLUBS : SKILL_LEVELS;
+        const groupingKey = grouping === 'byClub' ? 'club' : 'skillLevel';
         
-    }, [members, currentUser.name]);
+        groupLabels.forEach(item => {
+            groups[item.label] = [];
+        });
+        groups['미분류'] = [];
+
+        sorted.forEach(member => {
+            if (!member) return;
+            const memberGroupValue = member[groupingKey];
+            const groupInfo = groupLabels.find(item => item.value === memberGroupValue);
+            const groupLabel = groupInfo ? groupInfo.label : '미분류';
+            groups[groupLabel].push(member);
+        });
+
+        // Filter out empty groups
+        for (const label in groups) {
+            if (groups[label].length === 0) {
+                delete groups[label];
+            }
+        }
+        
+        return { type: 'grouped', data: groups };
+    }, [members, grouping, isSuperAdmin]);
+
+    const renderListHeader = () => (
+        React.createElement('thead', { className: "bg-gray-50" },
+            React.createElement('tr', null,
+                React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이름"),
+                React.createElement('th', { 
+                    scope: "col", 
+                    className: `px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${isSuperAdmin ? 'cursor-pointer hover:bg-gray-200' : ''}`,
+                    onClick: () => handleGroupingChange('byClub'),
+                    title: isSuperAdmin ? "클럽별로 그룹화" : ""
+                }, `소속 클럽 ${grouping === 'byClub' ? '▾' : ''}`),
+                React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이메일"),
+                React.createElement('th', { 
+                    scope: "col", 
+                    className: `px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${isSuperAdmin ? 'cursor-pointer hover:bg-gray-200' : ''}`,
+                    onClick: () => handleGroupingChange('byLevel'),
+                    title: isSuperAdmin ? "등급별로 그룹화" : ""
+                }, `등급 ${grouping === 'byLevel' ? '▾' : ''}`),
+                React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "나이"),
+                React.createElement('th', { scope: "col", className: "px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" }, "금월 회비"),
+                React.createElement('th', { scope: "col", className: "px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" }, "관리")
+            )
+        )
+    );
 
     return (
         React.createElement('div', null,
             React.createElement('div', { className: "flex justify-between items-center mb-6" },
                 React.createElement('h2', { className: "text-xl font-bold text-gray-700" }, `총 회원: ${members.length}명`),
                 React.createElement('div', { className: "flex items-center space-x-2" },
-                    React.createElement('button',
-                        {
-                            onClick: () => setViewMode('grid'),
-                            className: `p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-brand-blue text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`,
-                            'aria-label': "Grid View",
-                            title: "Grid View"
-                        },
-                        React.createElement(GridIcon, { className: "w-5 h-5" })
-                    ),
-                    React.createElement('button',
-                        {
-                            onClick: () => setViewMode('list'),
-                            className: `p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-brand-blue text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`,
-                            'aria-label': "List View",
-                            title: "List View"
-                        },
-                        React.createElement(ListIcon, { className: "w-5 h-5" })
-                    )
+                    React.createElement('button', {
+                        onClick: () => setViewMode('grid'),
+                        className: `p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-brand-blue text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`,
+                        'aria-label': "Grid View",
+                        title: "Grid View"
+                    }, React.createElement(GridIcon, { className: "w-5 h-5" })),
+                    React.createElement('button', {
+                        onClick: () => setViewMode('list'),
+                        className: `p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-brand-blue text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`,
+                        'aria-label': "List View",
+                        title: "List View"
+                    }, React.createElement(ListIcon, { className: "w-5 h-5" }))
                 )
             ),
             
@@ -190,17 +244,7 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
                     React.createElement('div', { className: "bg-white rounded-lg shadow-lg overflow-hidden" },
                         React.createElement('div', { className: "overflow-x-auto" },
                             React.createElement('table', { className: "min-w-full divide-y divide-gray-200" },
-                                React.createElement('thead', { className: "bg-gray-50" },
-                                    React.createElement('tr', null,
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이름"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "소속 클럽"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이메일"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "등급"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "나이"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" }, "금월 회비"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" }, "관리")
-                                    )
-                                ),
+                                renderListHeader(),
                                 React.createElement('tbody', { className: "bg-white divide-y divide-gray-200" },
                                     processedMembers.data.map(member => (
                                         React.createElement(MemberRow, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
@@ -213,48 +257,37 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
             ) : ( // Grouped view
                 viewMode === 'grid' ? (
                     React.createElement('div', { className: "space-y-8" },
-                        Object.entries(processedMembers.data).map(([groupName, groupMembers]) => {
-                            const membersInGroup = groupMembers;
-                            return (
+                        Object.entries(processedMembers.data).map(([groupName, groupMembers]) => (
                             React.createElement('div', { key: groupName },
                                 React.createElement('h3', { className: "text-xl font-bold text-gray-800 border-b-2 border-brand-blue pb-2 mb-4" },
-                                    groupName, " ", React.createElement('span', { className: "font-normal text-base text-gray-600" }, "(", membersInGroup.length, "명)")
+                                    groupName, React.createElement('span', { className: "font-normal text-base text-gray-600" }, `(${groupMembers.length}명)`)
                                 ),
                                 React.createElement('div', { className: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" },
-                                    membersInGroup.map(member => (
+                                    groupMembers.map(member => (
                                         React.createElement(MemberCard, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
                                     ))
                                 )
                             )
-                        );
-                    }))
+                        ))
+                    )
                 ) : ( // Grouped List View
                     React.createElement('div', { className: "bg-white rounded-lg shadow-lg overflow-hidden" },
                         React.createElement('div', { className: "overflow-x-auto" },
                             React.createElement('table', { className: "min-w-full divide-y divide-gray-200" },
-                                React.createElement('thead', { className: "bg-gray-50" },
-                                    React.createElement('tr', null,
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이름"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "소속 클럽"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "이메일"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "등급"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "나이"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" }, "금월 회비"),
-                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" }, "관리")
-                                    )
-                                ),
+                                renderListHeader(),
                                 React.createElement('tbody', { className: "bg-white divide-y divide-gray-200" },
-                                    Object.entries(processedMembers.data).flatMap(([groupName, groupMembers]) => {
-                                        const headerRow = React.createElement('tr', { key: groupName + "-header" },
-                                            React.createElement('th', { colSpan: 7, className: "px-4 py-2 bg-brand-light text-left text-base font-bold text-brand-blue" },
-                                                groupName, " (", groupMembers.length, "명)"
-                                            )
-                                        );
-                                        const memberRows = groupMembers.map(member => (
-                                            React.createElement(MemberRow, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
-                                        ));
-                                        return [headerRow].concat(memberRows);
-                                    })
+                                    Object.entries(processedMembers.data).map(([groupName, groupMembers]) => (
+                                        React.createElement(React.Fragment, { key: groupName },
+                                            React.createElement('tr', null,
+                                                React.createElement('th', { colSpan: 7, className: "px-4 py-2 bg-brand-light text-left text-base font-bold text-brand-blue" },
+                                                    `${groupName} (${groupMembers.length}명)`
+                                                )
+                                            ),
+                                            groupMembers.map(member => (
+                                                React.createElement(MemberRow, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
+                                            ))
+                                        )
+                                    ))
                                 )
                             )
                         )

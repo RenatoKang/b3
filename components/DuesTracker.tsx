@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Member, CurrentUser, Role } from '../types';
 import { SKILL_LEVELS } from '../constants';
@@ -35,6 +36,12 @@ export const DuesTracker: React.FC<DuesTrackerProps> = ({ members, onToggleDues,
     const months = getRelevantMonths();
     const isAdmin = currentUser.role === Role.ADMIN;
 
+    const sortedMembers = [...members].sort((a, b) => {
+        const nameA = a?.name || '';
+        const nameB = b?.name || '';
+        return nameA.localeCompare(nameB);
+    });
+
     return (
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-full mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-brand-blue">회비 납부 현황</h2>
@@ -51,7 +58,7 @@ export const DuesTracker: React.FC<DuesTrackerProps> = ({ members, onToggleDues,
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {members.sort((a,b) => (a.name || "").localeCompare(b.name || "")).map(member => {
+                        {sortedMembers.map(member => {
                             const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
                             return (
                                 <tr key={member.id}>

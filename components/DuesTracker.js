@@ -31,6 +31,12 @@ export const DuesTracker = ({ members, onToggleDues, currentUser }) => {
     const months = getRelevantMonths();
     const isAdmin = currentUser.role === Role.ADMIN;
 
+    const sortedMembers = [...members].sort((a, b) => {
+        const nameA = (a && a.name) || '';
+        const nameB = (b && b.name) || '';
+        return nameA.localeCompare(nameB);
+    });
+
     return (
         React.createElement('div', { className: "bg-white p-6 rounded-lg shadow-lg max-w-full mx-auto" },
             React.createElement('h2', { className: "text-2xl font-bold mb-6 text-brand-blue" }, "회비 납부 현황"),
@@ -47,7 +53,7 @@ export const DuesTracker = ({ members, onToggleDues, currentUser }) => {
                         )
                     ),
                     React.createElement('tbody', { className: "bg-white divide-y divide-gray-200" },
-                        members.sort((a,b) => (a.name || "").localeCompare(b.name || "")).map(member => {
+                        sortedMembers.map(member => {
                             const skillLevelObj = SKILL_LEVELS.find(l => l.value === member.skillLevel);
                             const skillLabel = (skillLevelObj && skillLevelObj.label) || member.skillLevel;
                             return (
