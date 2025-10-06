@@ -34,7 +34,8 @@ export const View = {
   ADD_MEMBER: 'ADD_MEMBER',
   DUES: 'DUES',
   TOURNAMENT: 'TOURNAMENT',
-  TRAINING: 'TRAINING'
+  TRAINING: 'TRAINING',
+  PROFILE: 'PROFILE',
 };
 
 export const GameType = {

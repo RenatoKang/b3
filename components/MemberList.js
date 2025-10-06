@@ -4,6 +4,18 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Role } from '../types.js';
 import { SKILL_LEVELS, SUPER_ADMIN_NAME, CLUBS } from '../constants.js';
 
+const calculateAge = (dob) => {
+    if (!dob) return null;
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+};
+
 const UserIcon = ({ className }) => (
     React.createElement('svg', { className: className, xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", strokeWidth: 1.5, stroke: "currentColor" },
         React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", d: "M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" })
@@ -34,6 +46,8 @@ const MemberCard = ({ member, onEdit, onDelete, currentUser }) => {
     const duesPaidThisMonth = (member.dues && member.dues[currentMonth]) || false;
     const skillLevelObj = SKILL_LEVELS.find(l => l.value === member.skillLevel);
     const skillLabel = (skillLevelObj && skillLevelObj.label) || member.skillLevel;
+    const age = calculateAge(member.dob);
+
     return (
         React.createElement('div', { key: member.id, className: "bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col" },
             React.createElement('div', { className: "h-40 bg-gray-200 flex items-center justify-center" },
@@ -47,7 +61,7 @@ const MemberCard = ({ member, onEdit, onDelete, currentUser }) => {
                 React.createElement('h3', { className: "text-xl font-bold text-brand-blue" }, member.name),
                 React.createElement('p', { className: "text-gray-500 text-sm" }, member.club),
                 React.createElement('p', { className: "text-gray-600 text-sm truncate", title: member.email }, member.email),
-                React.createElement('p', { className: "text-gray-600 text-sm" }, `${member.age}세, ${member.gender}`),
+                React.createElement('p', { className: "text-gray-600 text-sm" }, age ? `${age}세` : '나이 미등록', `, ${member.gender}`),
                 React.createElement('div', { className: "mt-2" },
                     React.createElement('span', { className: "inline-block bg-brand-light text-brand-blue text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full" },
                         `등급: ${skillLabel}`
@@ -76,6 +90,8 @@ const MemberRow = ({ member, onEdit, onDelete, currentUser }) => {
     const duesPaidThisMonth = (member.dues && member.dues[currentMonth]) || false;
     const skillLevelObj = SKILL_LEVELS.find(l => l.value === member.skillLevel);
     const skillLabel = (skillLevelObj && skillLevelObj.label) || member.skillLevel;
+    const age = calculateAge(member.dob);
+
     return (
         React.createElement('tr', { key: member.id, className: "hover:bg-gray-50" },
             React.createElement('td', { className: "px-6 py-4 whitespace-nowrap" },
@@ -102,7 +118,7 @@ const MemberRow = ({ member, onEdit, onDelete, currentUser }) => {
                     skillLabel
                 )
             ),
-            React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500" }, `${member.age}세`),
+            React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500" }, age ? `${age}세` : 'N/A'),
             React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-center" },
                  React.createElement('span', { className: `inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${duesPaidThisMonth ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}` },
                     duesPaidThisMonth ? '납부' : '미납'

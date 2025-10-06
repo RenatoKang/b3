@@ -28,7 +28,7 @@ export const Header = ({ currentView, onNavigate, memberCount, currentUser, onLo
           ),
           currentUser && (
             React.createElement('div', { className: "flex items-center space-x-4" },
-                React.createElement('div', { className: "text-right text-white" },
+                React.createElement('button', { onClick: () => onNavigate(View.PROFILE), className: "text-right text-white p-2 rounded-md hover:bg-white/10 transition-colors" },
                     React.createElement('p', { className: "font-semibold" }, currentUser.name, " 님"),
                     React.createElement('p', { className: "text-xs opacity-80" }, `${currentUser.club || '클럽 미지정'} / ${currentUser.role === 'ADMIN' ? '운영진' : '회원'}`)
                 ),

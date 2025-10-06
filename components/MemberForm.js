@@ -67,7 +67,8 @@ export const MemberForm = ({ onUpdate, onCancel, existingMember, isEditingSelf, 
   const [member, setMember] = useState({
     name: '',
     gender: Gender.MALE,
-    age: 20,
+    dob: '',
+    whatsapp: '',
     profilePicUrl: null,
     skillLevel: SkillLevel.MD,
     club: Club.UNAFFILIATED,
@@ -82,13 +83,13 @@ export const MemberForm = ({ onUpdate, onCancel, existingMember, isEditingSelf, 
 
   useEffect(() => {
     if (existingMember) {
-      const { name, gender, age, profilePicUrl, skillLevel, email, club } = existingMember;
-      setMember({ name, gender, age, profilePicUrl, skillLevel, club: club || Club.UNAFFILIATED });
+      const { name, gender, dob, whatsapp, profilePicUrl, skillLevel, email, club } = existingMember;
+      setMember({ name, gender, dob: dob || '', whatsapp: whatsapp || '', profilePicUrl, skillLevel, club: club || Club.UNAFFILIATED });
       setEmail(email);
       setPreview(existingMember.profilePicUrl);
     } else {
       setMember({
-        name: '', gender: Gender.MALE, age: 20, profilePicUrl: null, skillLevel: SkillLevel.MD, club: Club.UNAFFILIATED,
+        name: '', gender: Gender.MALE, dob: '', whatsapp: '', profilePicUrl: null, skillLevel: SkillLevel.MD, club: Club.UNAFFILIATED,
       });
       setEmail('');
       setPreview(null);
@@ -114,7 +115,7 @@ export const MemberForm = ({ onUpdate, onCancel, existingMember, isEditingSelf, 
             gender: newSkillLevel.startsWith('M') ? Gender.MALE : Gender.FEMALE
         }));
     } else {
-        setMember(prev => ({ ...prev, [name]: name === 'age' ? parseInt(value) : value }));
+        setMember(prev => ({ ...prev, [name]: value }));
     }
   };
   
@@ -173,7 +174,7 @@ export const MemberForm = ({ onUpdate, onCancel, existingMember, isEditingSelf, 
             email,
         });
     } else {
-        if (!member.name || !member.age || !email || !password) {
+        if (!member.name || !member.dob || !email || !password) {
           alert('Please fill in all fields.');
           return;
         }
@@ -248,11 +249,16 @@ export const MemberForm = ({ onUpdate, onCancel, existingMember, isEditingSelf, 
                 )
             )
         ),
+        
+        React.createElement('div', null,
+            React.createElement('label', { htmlFor: "whatsapp", className: "block text-sm font-medium text-gray-700" }, "Whatsapp 번호"),
+            React.createElement('input', { type: "tel", name: "whatsapp", id: "whatsapp", value: member.whatsapp, onChange: handleChange, placeholder: "(XX) XXXXX-XXXX", className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue" })
+        ),
 
         React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
           React.createElement('div', null,
-            React.createElement('label', { htmlFor: "age", className: "block text-sm font-medium text-gray-700" }, "나이"),
-            React.createElement('input', { type: "number", name: "age", id: "age", value: member.age, onChange: handleChange, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue", required: true })
+            React.createElement('label', { htmlFor: "dob", className: "block text-sm font-medium text-gray-700" }, "생년월일"),
+            React.createElement('input', { type: "date", name: "dob", id: "dob", value: member.dob, onChange: handleChange, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue", required: true })
           ),
           React.createElement('div', null,
             React.createElement('label', { htmlFor: "gender", className: "block text-sm font-medium text-gray-700" }, "성별"),
