@@ -31,7 +31,7 @@ const getCurrentMonth = () => {
 
 const MemberCard = ({ member, onEdit, onDelete, currentUser }) => {
     const currentMonth = getCurrentMonth();
-    const duesPaidThisMonth = member.dues?.[currentMonth] ?? false;
+    const duesPaidThisMonth = (member.dues && member.dues[currentMonth]) || false;
     const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
     return (
         React.createElement('div', { key: member.id, className: "bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col" },
@@ -72,7 +72,7 @@ const MemberCard = ({ member, onEdit, onDelete, currentUser }) => {
 
 const MemberRow = ({ member, onEdit, onDelete, currentUser }) => {
     const currentMonth = getCurrentMonth();
-    const duesPaidThisMonth = member.dues?.[currentMonth] ?? false;
+    const duesPaidThisMonth = (member.dues && member.dues[currentMonth]) || false;
     const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
     return (
         React.createElement('tr', { key: member.id, className: "hover:bg-gray-50" },
@@ -282,21 +282,18 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
                                     )
                                 ),
                                 React.createElement('tbody', { className: "bg-white divide-y divide-gray-200" },
-                                    Object.entries(processedMembers.data).map(([groupName, groupMembers]) => {
-                                        const membersInGroup = groupMembers;
-                                        return (
-                                        React.createElement(React.Fragment, { key: groupName },
-                                            React.createElement('tr', null,
-                                                React.createElement('th', { colSpan: 7, className: "px-4 py-2 bg-brand-light text-left text-base font-bold text-brand-blue" },
-                                                    groupName, " (", membersInGroup.length, "명)"
-                                                )
-                                            ),
-                                            membersInGroup.map(member => (
-                                                React.createElement(MemberRow, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
-                                            ))
-                                        )
-                                    );
-                                }))
+                                    Object.entries(processedMembers.data).flatMap(([groupName, groupMembers]) => {
+                                        const headerRow = React.createElement('tr', { key: groupName + "-header" },
+                                            React.createElement('th', { colSpan: 7, className: "px-4 py-2 bg-brand-light text-left text-base font-bold text-brand-blue" },
+                                                groupName, " (", groupMembers.length, "명)"
+                                            )
+                                        );
+                                        const memberRows = groupMembers.map(member => (
+                                            React.createElement(MemberRow, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
+                                        ));
+                                        return [headerRow].concat(memberRows);
+                                    })
+                                )
                             )
                         )
                     )

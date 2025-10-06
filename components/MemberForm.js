@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Gender, SkillLevel, Role, Club } from '../types.js';
 import { SKILL_LEVELS, CLUBS } from '../constants.js';
@@ -118,7 +119,7 @@ export const MemberForm = ({ onUpdate, onCancel, existingMember, isEditingSelf, 
   };
   
   const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files && e.target.files[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
         alert('Please upload an image file.');

@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Role } from '../types.js';
 import { SKILL_LEVELS } from '../constants.js';
@@ -53,17 +54,18 @@ export const DuesTracker = ({ members, onToggleDues, currentUser }) => {
                                     React.createElement('td', { className: "px-4 py-4 whitespace-nowrap sticky left-0 bg-white font-medium text-gray-900" }, member.name),
                                     React.createElement('td', { className: "px-4 py-4 whitespace-nowrap text-sm text-gray-700" }, member.club),
                                     React.createElement('td', { className: "px-4 py-4 whitespace-nowrap text-sm text-gray-700" }, skillLabel),
-                                    months.map(month => (
-                                        React.createElement('td', { key: month, className: "px-4 py-4 whitespace-nowrap text-center" },
+                                    months.map(month => {
+                                        const isPaid = member.dues && member.dues[month];
+                                        return React.createElement('td', { key: month, className: "px-4 py-4 whitespace-nowrap text-center" },
                                             React.createElement('span', 
                                                 {
                                                     onClick: isAdmin ? () => onToggleDues(member.id, month) : undefined,
-                                                    className: `px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${member.dues?.[month] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`
+                                                    className: `px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${isPaid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`
                                                 },
-                                                member.dues?.[month] ? '납부' : '미납'
+                                                isPaid ? '납부' : '미납'
                                             )
                                         )
-                                    ))
+                                    })
                                 )
                             );
                         })

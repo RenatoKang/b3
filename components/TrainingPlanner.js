@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { SKILL_LEVELS } from '../constants.js';
 import { generateTrainingPlan } from '../services/geminiService.js';
@@ -26,7 +27,8 @@ export const TrainingPlanner = ({ currentUser }) => {
         setPlan(null);
         
         try {
-            const skillLabel = SKILL_LEVELS.find(l => l.value === skillLevel)?.label || skillLevel;
+            const skill = SKILL_LEVELS.find(l => l.value === skillLevel);
+            const skillLabel = (skill && skill.label) || skillLevel;
             const generatedPlan = await generateTrainingPlan(skillLabel, focusArea);
             setPlan(generatedPlan);
         } catch (err) {

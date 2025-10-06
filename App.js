@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Role } from './types.js';
 import { Header } from './components/Header.js';
@@ -125,7 +126,7 @@ const App = () => {
   };
 
   const handleToggleDues = async (id, month) => {
-    if (currentUser?.role !== Role.ADMIN) return;
+    if (!currentUser || currentUser.role !== Role.ADMIN) return;
     const member = members.find(m => m.id === id);
     if (!member) return;
     const memberDocRef = doc(db, "members", id);
