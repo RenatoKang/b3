@@ -35,10 +35,10 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, memberC
           </div>
           {currentUser && (
             <div className="flex items-center space-x-4">
-                <div className="text-right text-white">
+                <button onClick={() => onNavigate(View.PROFILE)} className="text-right text-white p-2 rounded-md hover:bg-white/10 transition-colors">
                     <p className="font-semibold">{currentUser.name} 님</p>
                     <p className="text-xs opacity-80">{currentUser.club || '클럽 미지정'} / {currentUser.role === 'ADMIN' ? '운영진' : '회원'}</p>
-                </div>
+                </button>
                 <button onClick={onLogout} className="text-sm bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded">
                   로그아웃
                 </button>

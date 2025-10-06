@@ -1,7 +1,6 @@
-
-import React from 'react';
-import { Member, CurrentUser, Role } from '../types';
-import { SKILL_LEVELS } from '../constants';
+import React, { useMemo } from 'react';
+import { Member, CurrentUser, Role, Club } from '../types';
+import { SKILL_LEVELS, CLUBS } from '../constants';
 
 interface DuesTrackerProps {
     members: Member[];
@@ -36,11 +35,28 @@ export const DuesTracker: React.FC<DuesTrackerProps> = ({ members, onToggleDues,
     const months = getRelevantMonths();
     const isAdmin = currentUser.role === Role.ADMIN;
 
-    const sortedMembers = [...members].sort((a, b) => {
-        const nameA = a?.name || '';
-        const nameB = b?.name || '';
-        return nameA.localeCompare(nameB);
-    });
+    const groupedMembers = useMemo(() => {
+        const groups: Record<string, Member[]> = {};
+        
+        const clubOrder = CLUBS.map(c => c.value);
+
+        const sorted = [...members].sort((a, b) => {
+             const clubComparison = clubOrder.indexOf(a.club) - clubOrder.indexOf(b.club);
+            if (clubComparison !== 0) return clubComparison;
+            return a.name.localeCompare(b.name);
+        });
+
+        sorted.forEach(member => {
+            const clubName = member.club || Club.UNAFFILIATED;
+            if (!groups[clubName]) {
+                groups[clubName] = [];
+            }
+            groups[clubName].push(member);
+        });
+
+        return Object.entries(groups);
+
+    }, [members]);
 
     return (
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-full mx-auto">
@@ -50,7 +66,6 @@ export const DuesTracker: React.FC<DuesTrackerProps> = ({ members, onToggleDues,
                     <thead className="bg-gray-50">
                         <tr>
                             <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">이름</th>
-                            <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">소속 클럽</th>
                             <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">등급</th>
                             {months.map(month => (
                                <th key={month} scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{month}</th>
@@ -58,26 +73,34 @@ export const DuesTracker: React.FC<DuesTrackerProps> = ({ members, onToggleDues,
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {sortedMembers.map(member => {
-                            const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
-                            return (
-                                <tr key={member.id}>
-                                    <td className="px-4 py-4 whitespace-nowrap sticky left-0 bg-white font-medium text-gray-900">{member.name}</td>
-                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{member.club}</td>
-                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{skillLabel}</td>
-                                    {months.map(month => (
-                                        <td key={month} className="px-4 py-4 whitespace-nowrap text-center">
-                                            <span 
-                                                onClick={isAdmin ? () => onToggleDues(member.id, month) : undefined}
-                                                className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${member.dues?.[month] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
-                                            >
-                                                {member.dues?.[month] ? '납부' : '미납'}
-                                            </span>
-                                        </td>
-                                    ))}
+                        {groupedMembers.map(([clubName, clubMembers]) => (
+                            <React.Fragment key={clubName}>
+                                <tr>
+                                    <th colSpan={2 + months.length} className="px-4 py-2 bg-brand-light text-left text-base font-bold text-brand-blue sticky left-0">
+                                       {clubName} ({clubMembers.length}명)
+                                    </th>
                                 </tr>
-                            );
-                        })}
+                                {clubMembers.map(member => {
+                                    const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
+                                    return (
+                                        <tr key={member.id}>
+                                            <td className="px-4 py-4 whitespace-nowrap sticky left-0 bg-white font-medium text-gray-900">{member.name}</td>
+                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">{skillLabel}</td>
+                                            {months.map(month => (
+                                                <td key={month} className="px-4 py-4 whitespace-nowrap text-center">
+                                                    <span 
+                                                        onClick={isAdmin ? () => onToggleDues(member.id, month) : undefined}
+                                                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${member.dues?.[month] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
+                                                    >
+                                                        {member.dues?.[month] ? '납부' : '미납'}
+                                                    </span>
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    );
+                                })}
+                            </React.Fragment>
+                        ))}
                     </tbody>
                 </table>
             </div>

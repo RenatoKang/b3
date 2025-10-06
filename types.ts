@@ -34,7 +34,8 @@ export interface Member {
   name: string;
   email: string;
   gender: Gender;
-  age: number;
+  dob: string; // Date of Birth in YYYY-MM-DD format
+  whatsapp?: string; // Optional WhatsApp number
   profilePicUrl: string | null;
   skillLevel: SkillLevel;
   dues: Record<string, boolean>;
@@ -51,6 +52,7 @@ export enum View {
   DUES = 'DUES',
   TOURNAMENT = 'TOURNAMENT',
   TRAINING = 'TRAINING',
+  PROFILE = 'PROFILE',
 }
 
 export enum GameType {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Member, Gender, SkillLevel, Role, Club } from '../types';
 import { SKILL_LEVELS, CLUBS } from '../constants';
@@ -76,7 +75,8 @@ export const MemberForm: React.FC<MemberFormProps> = ({ onUpdate, onCancel, exis
   const [member, setMember] = useState({
     name: '',
     gender: Gender.MALE,
-    age: 20,
+    dob: '',
+    whatsapp: '',
     profilePicUrl: null,
     skillLevel: SkillLevel.MD,
     club: Club.UNAFFILIATED,
@@ -92,13 +92,13 @@ export const MemberForm: React.FC<MemberFormProps> = ({ onUpdate, onCancel, exis
 
   useEffect(() => {
     if (existingMember) {
-      const { name, gender, age, profilePicUrl, skillLevel, email, club } = existingMember;
-      setMember({ name, gender, age, profilePicUrl, skillLevel, club: club || Club.UNAFFILIATED });
+      const { name, gender, dob, whatsapp, profilePicUrl, skillLevel, email, club } = existingMember;
+      setMember({ name, gender, dob: dob || '', whatsapp: whatsapp || '', profilePicUrl, skillLevel, club: club || Club.UNAFFILIATED });
       setEmail(email);
       setPreview(existingMember.profilePicUrl);
     } else {
       setMember({
-        name: '', gender: Gender.MALE, age: 20, profilePicUrl: null, skillLevel: SkillLevel.MD, club: Club.UNAFFILIATED
+        name: '', gender: Gender.MALE, dob: '', whatsapp: '', profilePicUrl: null, skillLevel: SkillLevel.MD, club: Club.UNAFFILIATED
       });
       setEmail('');
       setPreview(null);
@@ -124,7 +124,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({ onUpdate, onCancel, exis
             gender: newSkillLevel.startsWith('M') ? Gender.MALE : Gender.FEMALE
         }));
     } else {
-        setMember(prev => ({ ...prev, [name]: name === 'age' ? parseInt(value) : value }));
+        setMember(prev => ({ ...prev, [name]: value }));
     }
   };
   
@@ -186,7 +186,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({ onUpdate, onCancel, exis
         });
     } else {
         // Register new member
-        if (!member.name || !member.age || !email || !password) {
+        if (!member.name || !member.dob || !email || !password) {
           alert('Please fill in all fields.');
           return;
         }
@@ -262,11 +262,17 @@ export const MemberForm: React.FC<MemberFormProps> = ({ onUpdate, onCancel, exis
                 </div>
             </>
         )}
+        
+        <div>
+            <label htmlFor="whatsapp" className="block text-sm font-medium text-gray-700">Whatsapp 번호</label>
+            <input type="tel" name="whatsapp" id="whatsapp" value={member.whatsapp} onChange={handleChange} placeholder="(XX) XXXXX-XXXX" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue" />
+        </div>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="age" className="block text-sm font-medium text-gray-700">나이</label>
-            <input type="number" name="age" id="age" value={member.age} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue" required />
+            <label htmlFor="dob" className="block text-sm font-medium text-gray-700">생년월일</label>
+            <input type="date" name="dob" id="dob" value={member.dob} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue" required />
           </div>
           <div>
             <label htmlFor="gender" className="block text-sm font-medium text-gray-700">성별</label>

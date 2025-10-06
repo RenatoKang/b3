@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Member, View, Tournament, Role, CurrentUser } from './types';
 import { Header } from './components/Header';
@@ -9,6 +7,7 @@ import { DuesTracker } from './components/DuesTracker';
 import { TournamentGenerator } from './components/TournamentGenerator';
 import { TrainingPlanner } from './components/TrainingPlanner';
 import { Login } from './components/Login';
+import { ProfilePage } from './components/ProfilePage';
 import { ADMIN_NAMES, SUPER_ADMIN_NAME } from './constants';
 import { auth, db } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -125,7 +124,7 @@ const App: React.FC = () => {
     }
 
     setEditingMember(null);
-    setView(View.MEMBERS);
+    setView(View.PROFILE); // Go back to profile view after editing
   };
   
   const handleEditMember = (member: Member) => {
@@ -161,6 +160,9 @@ const App: React.FC = () => {
   
   const handleNavigate = (newView: View) => {
     setEditingMember(null);
+    if (newView === View.PROFILE) {
+        setEditingMember(currentUser);
+    }
     setView(newView);
   };
   
@@ -205,7 +207,7 @@ const App: React.FC = () => {
         return <MemberForm 
             onUpdate={handleUpdateMember} 
             existingMember={editingMember} 
-            onCancel={() => setView(View.MEMBERS)}
+            onCancel={() => editingMember?.id === currentUser.id ? setView(View.PROFILE) : setView(View.MEMBERS)}
             isEditingSelf={!!(editingMember && currentUser && editingMember.id === currentUser.id)}
             currentUserRole={currentUser.role}
         />;
@@ -222,6 +224,8 @@ const App: React.FC = () => {
         />;
       case View.TRAINING:
         return <TrainingPlanner currentUser={currentUser} />;
+       case View.PROFILE:
+        return <ProfilePage currentUser={currentUser} onEdit={() => handleEditMember(currentUser)} />;
       case View.MEMBERS:
       default:
         return <MemberList members={filteredMembers} onEdit={handleEditMember} onDelete={handleDeleteMember} currentUser={currentUser} />;

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Member, CurrentUser, Role } from '../types';
 import { SKILL_LEVELS, SUPER_ADMIN_NAME, CLUBS } from '../constants';
@@ -12,6 +10,18 @@ interface MemberListProps {
 }
 
 type GroupingMode = 'none' | 'byClub' | 'byLevel';
+
+const calculateAge = (dob: string): number | null => {
+    if (!dob) return null;
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+};
 
 const UserIcon: React.FC<{className?: string}> = ({ className }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -43,6 +53,8 @@ const MemberCard: React.FC<{member: Member, onEdit: (m: Member) => void, onDelet
     const duesPaidThisMonth = member.dues?.[currentMonth] ?? false;
     const skillLevelObj = SKILL_LEVELS.find(l => l.value === member.skillLevel);
     const skillLabel = skillLevelObj?.label || member.skillLevel;
+    const age = calculateAge(member.dob);
+
     return (
         <div key={member.id} className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col">
             <div className="h-40 bg-gray-200 flex items-center justify-center">
@@ -56,7 +68,7 @@ const MemberCard: React.FC<{member: Member, onEdit: (m: Member) => void, onDelet
                 <h3 className="text-xl font-bold text-brand-blue">{member.name}</h3>
                 <p className="text-gray-500 text-sm">{member.club}</p>
                 <p className="text-gray-600 text-sm truncate" title={member.email}>{member.email}</p>
-                <p className="text-gray-600 text-sm">{member.age}세, {member.gender}</p>
+                <p className="text-gray-600 text-sm">{age ? `${age}세` : '나이 미등록'}, {member.gender}</p>
                 <div className="mt-2">
                     <span className="inline-block bg-brand-light text-brand-blue text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
                         등급: {skillLabel}
@@ -85,6 +97,8 @@ const MemberRow: React.FC<{member: Member, onEdit: (m: Member) => void, onDelete
     const duesPaidThisMonth = member.dues?.[currentMonth] ?? false;
     const skillLevelObj = SKILL_LEVELS.find(l => l.value === member.skillLevel);
     const skillLabel = skillLevelObj?.label || member.skillLevel;
+    const age = calculateAge(member.dob);
+
     return (
         <tr key={member.id} className="hover:bg-gray-50">
             <td className="px-6 py-4 whitespace-nowrap">
@@ -111,7 +125,7 @@ const MemberRow: React.FC<{member: Member, onEdit: (m: Member) => void, onDelete
                     {skillLabel}
                 </span>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.age}세</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{age ? `${age}세` : 'N/A'}</td>
             <td className="px-6 py-4 whitespace-nowrap text-center">
                  <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${duesPaidThisMonth ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                     {duesPaidThisMonth ? '납부' : '미납'}
@@ -276,18 +290,22 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
             ) : ( // Grouped view
                 viewMode === 'grid' ? (
                     <div className="space-y-8">
-                        {Object.entries(processedMembers.data).map(([groupName, groupMembers]) => (
-                            <div key={groupName}>
-                                <h3 className="text-xl font-bold text-gray-800 border-b-2 border-brand-blue pb-2 mb-4">
-                                    {groupName} <span className="font-normal text-base text-gray-600">({groupMembers.length}명)</span>
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                    {groupMembers.map(member => (
-                                        <MemberCard key={member.id} member={member} onEdit={onEdit} onDelete={onDelete} currentUser={currentUser} />
-                                    ))}
+                        {/* FIX: Use Object.keys to iterate over grouped members to avoid type inference issues with Object.entries. */}
+                        {Object.keys(processedMembers.data).map((groupName) => {
+                            const groupMembers = processedMembers.data[groupName];
+                            return (
+                                <div key={groupName}>
+                                    <h3 className="text-xl font-bold text-gray-800 border-b-2 border-brand-blue pb-2 mb-4">
+                                        {groupName} <span className="font-normal text-base text-gray-600">({groupMembers.length}명)</span>
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                        {groupMembers.map(member => (
+                                            <MemberCard key={member.id} member={member} onEdit={onEdit} onDelete={onDelete} currentUser={currentUser} />
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : ( // Grouped List View
                     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -295,18 +313,22 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
                             <table className="min-w-full divide-y divide-gray-200">
                                 {renderListHeader()}
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {Object.entries(processedMembers.data).map(([groupName, groupMembers]) => (
-                                        <React.Fragment key={groupName}>
-                                            <tr>
-                                                <th colSpan={7} className="px-4 py-2 bg-brand-light text-left text-base font-bold text-brand-blue">
-                                                    {groupName} ({groupMembers.length}명)
-                                                </th>
-                                            </tr>
-                                            {groupMembers.map(member => (
-                                                <MemberRow key={member.id} member={member} onEdit={onEdit} onDelete={onDelete} currentUser={currentUser} />
-                                            ))}
-                                        </React.Fragment>
-                                    ))}
+                                    {/* FIX: Use Object.keys to iterate over grouped members to avoid type inference issues with Object.entries. */}
+                                    {Object.keys(processedMembers.data).map((groupName) => {
+                                        const groupMembers = processedMembers.data[groupName];
+                                        return (
+                                            <React.Fragment key={groupName}>
+                                                <tr>
+                                                    <th colSpan={7} className="px-4 py-2 bg-brand-light text-left text-base font-bold text-brand-blue">
+                                                        {groupName} ({groupMembers.length}명)
+                                                    </th>
+                                                </tr>
+                                                {groupMembers.map(member => (
+                                                    <MemberRow key={member.id} member={member} onEdit={onEdit} onDelete={onDelete} currentUser={currentUser} />
+                                                ))}
+                                            </React.Fragment>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
