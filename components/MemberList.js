@@ -124,7 +124,6 @@ const MemberRow = ({ member, onEdit, onDelete, currentUser }) => {
 
 export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
     const [viewMode, setViewMode] = useState('list');
-    const [displayMode, setDisplayMode] = useState('byClub');
     
     if (members.length === 0) {
         return (
@@ -136,45 +135,27 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
     }
     
     const processedMembers = useMemo(() => {
-        const sorted = [...members].sort((a, b) => a.name.localeCompare(b.name));
+        const sorted = [...members].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         
         if (currentUser.name !== SUPER_ADMIN_NAME) {
             return { type: 'flat', data: sorted };
         }
 
-        if (displayMode === 'byClub') {
-            const groups = {};
-            CLUBS.forEach(club => {
-                const membersInClub = sorted.filter(m => m.club === club.value);
-                if (membersInClub.length > 0) {
-                    groups[club.label] = membersInClub;
-                }
-            });
-            return { type: 'grouped', data: groups };
-        }
-
-        if (displayMode === 'byLevel') {
-            const groups = {};
-            SKILL_LEVELS.forEach(level => {
-                const membersInLevel = sorted.filter(m => m.skillLevel === level.value);
-                if (membersInLevel.length > 0) {
-                    groups[level.label] = membersInLevel;
-                }
-            });
-            return { type: 'grouped', data: groups };
-        }
+        // Default to 'byClub' for super admin
+        const groups = {};
+        CLUBS.forEach(club => {
+            const membersInClub = sorted.filter(m => m.club === club.value);
+            if (membersInClub.length > 0) {
+                groups[club.label] = membersInClub;
+            }
+        });
+        return { type: 'grouped', data: groups };
         
-        return { type: 'flat', data: sorted };
-    }, [members, displayMode, currentUser.name]);
-
-    const displayOptions = [
-        { key: 'byClub', label: '클럽별' },
-        { key: 'byLevel', label: '등급별' },
-    ];
+    }, [members, currentUser.name]);
 
     return (
         React.createElement('div', null,
-            React.createElement('div', { className: "flex justify-between items-center mb-4" },
+            React.createElement('div', { className: "flex justify-between items-center mb-6" },
                 React.createElement('h2', { className: "text-xl font-bold text-gray-700" }, `총 회원: ${members.length}명`),
                 React.createElement('div', { className: "flex items-center space-x-2" },
                     React.createElement('button',
@@ -195,26 +176,6 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
                         },
                         React.createElement(ListIcon, { className: "w-5 h-5" })
                     )
-                )
-            ),
-
-            currentUser.name === SUPER_ADMIN_NAME && (
-                React.createElement('div', { className: "flex items-center space-x-2 mb-6 bg-gray-100 p-2 rounded-lg" },
-                    React.createElement('span', { className: "text-sm font-medium text-gray-700 mr-2" }, "보기 방식:"),
-                    displayOptions.map(opt => (
-                        React.createElement('button',
-                            {
-                                key: opt.key,
-                                onClick: () => setDisplayMode(opt.key),
-                                className: `px-3 py-1 text-sm font-semibold rounded-md transition-colors ${
-                                    displayMode === opt.key 
-                                    ? 'bg-brand-blue text-white' 
-                                    : 'bg-white text-gray-600 hover:bg-gray-200'
-                                }`
-                            },
-                            opt.label
-                        )
-                    ))
                 )
             ),
             

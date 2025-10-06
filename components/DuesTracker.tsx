@@ -51,7 +51,7 @@ export const DuesTracker: React.FC<DuesTrackerProps> = ({ members, onToggleDues,
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {members.sort((a,b) => a.name.localeCompare(b.name)).map(member => {
+                        {members.sort((a,b) => (a.name || "").localeCompare(b.name || "")).map(member => {
                             const skillLabel = SKILL_LEVELS.find(l => l.value === member.skillLevel)?.label || member.skillLevel;
                             return (
                                 <tr key={member.id}>

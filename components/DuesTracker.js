@@ -47,7 +47,7 @@ export const DuesTracker = ({ members, onToggleDues, currentUser }) => {
                         )
                     ),
                     React.createElement('tbody', { className: "bg-white divide-y divide-gray-200" },
-                        members.sort((a,b) => a.name.localeCompare(b.name)).map(member => {
+                        members.sort((a,b) => (a.name || "").localeCompare(b.name || "")).map(member => {
                             const skillLevelObj = SKILL_LEVELS.find(l => l.value === member.skillLevel);
                             const skillLabel = (skillLevelObj && skillLevelObj.label) || member.skillLevel;
                             return (

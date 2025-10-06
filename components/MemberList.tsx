@@ -133,7 +133,6 @@ const MemberRow: React.FC<{member: Member, onEdit: (m: Member) => void, onDelete
 
 export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelete, currentUser }) => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-    const [displayMode, setDisplayMode] = useState<DisplayMode>('byClub');
     
     if (members.length === 0) {
         return (
@@ -145,45 +144,27 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
     }
     
     const processedMembers = useMemo(() => {
-        const sorted = [...members].sort((a, b) => a.name.localeCompare(b.name));
+        const sorted = [...members].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         
         if (currentUser.name !== SUPER_ADMIN_NAME) {
             return { type: 'flat' as const, data: sorted };
         }
 
-        if (displayMode === 'byClub') {
-            const groups: Record<string, Member[]> = {};
-            CLUBS.forEach(club => {
-                const membersInClub = sorted.filter(m => m.club === club.value);
-                if (membersInClub.length > 0) {
-                    groups[club.label] = membersInClub;
-                }
-            });
-            return { type: 'grouped' as const, data: groups };
-        }
+        // Default to 'byClub' for super admin
+        const groups: Record<string, Member[]> = {};
+        CLUBS.forEach(club => {
+            const membersInClub = sorted.filter(m => m.club === club.value);
+            if (membersInClub.length > 0) {
+                groups[club.label] = membersInClub;
+            }
+        });
+        return { type: 'grouped' as const, data: groups };
 
-        if (displayMode === 'byLevel') {
-            const groups: Record<string, Member[]> = {};
-            SKILL_LEVELS.forEach(level => {
-                const membersInLevel = sorted.filter(m => m.skillLevel === level.value);
-                if (membersInLevel.length > 0) {
-                    groups[level.label] = membersInLevel;
-                }
-            });
-            return { type: 'grouped' as const, data: groups };
-        }
-        
-        return { type: 'flat' as const, data: sorted };
-    }, [members, displayMode, currentUser.name]);
-
-    const displayOptions: {key: DisplayMode, label: string}[] = [
-        { key: 'byClub', label: '클럽별' },
-        { key: 'byLevel', label: '등급별' },
-    ];
+    }, [members, currentUser.name]);
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-700">총 회원: {members.length}명</h2>
                 <div className="flex items-center space-x-2">
                     <button
@@ -204,25 +185,6 @@ export const MemberList: React.FC<MemberListProps> = ({ members, onEdit, onDelet
                     </button>
                 </div>
             </div>
-
-            {currentUser.name === SUPER_ADMIN_NAME && (
-                <div className="flex items-center space-x-2 mb-6 bg-gray-100 p-2 rounded-lg">
-                    <span className="text-sm font-medium text-gray-700 mr-2">보기 방식:</span>
-                    {displayOptions.map(opt => (
-                        <button
-                            key={opt.key}
-                            onClick={() => setDisplayMode(opt.key)}
-                            className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${
-                                displayMode === opt.key 
-                                ? 'bg-brand-blue text-white' 
-                                : 'bg-white text-gray-600 hover:bg-gray-200'
-                            }`}
-                        >
-                            {opt.label}
-                        </button>
-                    ))}
-                </div>
-            )}
             
             {processedMembers.type === 'flat' ? (
                 viewMode === 'grid' ? (
