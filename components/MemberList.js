@@ -294,7 +294,7 @@ export const MemberList = ({ members, onEdit, onDelete, currentUser }) => {
                                                 React.createElement(MemberRow, { key: member.id, member: member, onEdit: onEdit, onDelete: onDelete, currentUser: currentUser })
                                             ))
                                         )
-                                    )}))
+                                    )})
                                 )
                             )
                         )
