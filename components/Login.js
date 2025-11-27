@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { auth } from '../services/firebase.js';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 
 const ShuttlecockIcon = ({ className }) => (
     React.createElement('svg', { className, xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", fill: "currentColor" },
@@ -13,18 +13,44 @@ export const Login = ({ onNavigateToRegister }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
 
     const handleLoginClick = async () => {
         if (!email || !password) {
             setError('이메일과 비밀번호를 입력해주세요.');
+            setMessage('');
             return;
         }
         setError('');
+        setMessage('');
         try {
             await signInWithEmailAndPassword(auth, email, password);
         } catch (err) {
             console.error(err);
             setError('로그인에 실패했습니다. 이메일 또는 비밀번호를 확인해주세요.');
+        }
+    };
+    
+    const handleResetPassword = async () => {
+        if (!email) {
+            setError('비밀번호를 재설정하려면 이메일을 입력해주세요.');
+            setMessage('');
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setMessage('비밀번호 재설정 이메일을 발송했습니다. 메일함을 확인해주세요.');
+            setError('');
+        } catch (err) {
+            console.error(err);
+            if (err.code === 'auth/user-not-found') {
+                setError('등록되지 않은 이메일입니다.');
+            } else if (err.code === 'auth/invalid-email') {
+                setError('유효하지 않은 이메일 형식입니다.');
+            } else {
+                setError('이메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+            }
+            setMessage('');
         }
     };
     
@@ -59,18 +85,25 @@ export const Login = ({ onNavigateToRegister }) => {
                         })
                     ),
                     React.createElement('div', null,
-                        React.createElement('label', { htmlFor: "password", className: "block text-sm font-medium text-gray-700" }, "비밀번호"),
+                         React.createElement('div', { className: "flex justify-between items-center mb-1" },
+                            React.createElement('label', { htmlFor: "password", className: "block text-sm font-medium text-gray-700" }, "비밀번호"),
+                            React.createElement('button', {
+                                type: "button",
+                                onClick: handleResetPassword,
+                                className: "text-xs text-brand-blue hover:text-brand-secondary hover:underline"
+                            }, "비밀번호 찾기")
+                        ),
                         React.createElement('input', { 
                             id: "password",
                             type: "password",
                             value: password,
                             onChange: e => setPassword(e.target.value),
-                            required: true,
                             className: "mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-blue focus:border-brand-blue sm:text-sm text-black"
                         })
                     ),
                     
                     error && React.createElement('p', { className: "text-red-500 text-center text-sm" }, error),
+                    message && React.createElement('p', { className: "text-green-600 text-center text-sm" }, message),
 
                     React.createElement('div', { className: "space-y-4 pt-2" },
                         React.createElement('button', {
